@@ -314,15 +314,17 @@ def nsga2_generator(random, args):
     population_size: population of the EA (default: value)
     offspring_size: offspring of the EA (default: value)
     max_generations: maximum generations (default: value)
-    n_threads: number of threads to be used for concurrent evaluations (default: 1)
+    n_parallel: number of threads or processes to be used for concurrent evaluations (default: 1)
     random_seed: seed to initialize the pseudo-random number generation (default: time)
     initial_population: individuals (seed sets) to be added to the initial population (the rest will be randomly generated)
+    
+    multithread: if true multithreading is used to parallelize execution, otherwise multiprocessing is used
     """
 
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
-							  max_generations=100, n_threads=1, random_seed=None, initial_population=None,
-							  population_file=None):
+							  max_generations=100, n_parallel=1, random_seed=None, initial_population=None,
+							  population_file=None, multithread=False):
 	# initialize a generic evolutionary algorithm
 	logging.debug("Initializing Evolutionary Algorithm...")
 	prng = random.Random()
@@ -362,10 +364,11 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		model=model,
 		no_simulations=no_simulations,
 		nodes=nodes,
-		n_threads=n_threads,
+		n_parallel=n_parallel,
 		population_file=population_file,
 		time_previous_generation=time(),  # this will be updated in the observer
 		random_seed=random_seed,
+		multithread= multithread,
 	)
 
 	best_individual = max(final_population)
@@ -415,7 +418,7 @@ def ea_super_operator(random, candidate1, candidate2, args):
 
 
 def ea_evaluator(candidates, args):
-	n_threads = args["n_threads"]
+	n_parallel = args["n_parallel"]
 	G = args["G"]
 	p = args["p"]
 	model = args["model"]
@@ -427,7 +430,7 @@ def ea_evaluator(candidates, args):
 	# depending on how many threads we have at our disposal,
 	# we use a different methodology
 	# if we just have one thread, let's just evaluate individuals old style
-	if n_threads == 1:
+	if n_parallel == 1 and args["multithread"]:
 		for index, A in enumerate(candidates):
 			# TODO sort phenotype, use cache...? or manage sorting directly during individual creation? see lines 108-142 in src_OLD/multiObjective-inspyred/sn-inflmax-inspyred.py
 			# TODO maybe if we make sure that candidates are already sets before getting here, we could save some computational time
@@ -439,22 +442,35 @@ def ea_evaluator(candidates, args):
 			fitness[index] = influence_mean
 
 	else:
+		if args["multithread"]:
+			# create a threadpool, using the local module
+			import threadpool
+			thread_pool = threadpool.ThreadPool(n_parallel)
 
-		# create a threadpool, using the local module
-		import threadpool
-		thread_pool = threadpool.ThreadPool(n_threads)
+			# create thread lock, to be used for concurrency
+			import threading
+			thread_lock = threading.Lock()
 
-		# create thread lock, to be used for concurrency
-		import threading
-		thread_lock = threading.Lock()
+			# create list of tasks for the thread pool, using the threaded evaluation function
+			tasks = [(G, p, A, no_simulations, model, fitness, index, thread_lock, random_seed) for index, A in
+					 enumerate(candidates)]
 
-		# create list of tasks for the thread pool, using the threaded evaluation function
-		tasks = [(G, p, A, no_simulations, model, fitness, index, thread_lock, random_seed) for index, A in
-				 enumerate(candidates)]
-		thread_pool.map(ea_evaluator_threaded, tasks)
+			thread_pool.map(ea_evaluator_threaded, tasks)
 
-		# start thread pool and wait for conclusion
-		thread_pool.wait_completion()
+			# start thread pool and wait for conclusion
+			thread_pool.wait_completion()
+			# thread_pool.
+		else:
+			# -------------- multiprocessing ----------------
+			from multiprocessing import Pool
+			process_pool = Pool(n_parallel)
+
+			tasks = [A for A in candidates]
+			from functools import partial
+			# multiprocessing pool imap function accepts only one argument at a time, create partial function with
+			# constant parameters
+			f = partial(ea_evaluator_processed, G=G, p=p, no_simulations=no_simulations, model=model, random_seed=random_seed)
+			fitness = list(process_pool.imap(f, tasks))
 
 	return fitness
 
@@ -462,7 +478,6 @@ def ea_evaluator(candidates, args):
 def ea_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread_lock, random_seed, thread_id):
 	# TODO not sure that this is needed
 	A_set = set(A)
-	# TODO: add random seed as parameter both to this method and to montecarlo simulation
 
 	# run spread simulation
 	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model, random_seed)
@@ -473,6 +488,13 @@ def ea_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread
 	thread_lock.release()
 
 	return
+
+
+def ea_evaluator_processed(A, G, p, no_simulations, model, random_seed):
+	A = set(A)
+	# run spread simulation
+	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A, p, no_simulations, model, random_seed)
+	return influence_mean
 
 
 # this main here is just to test the current implementation
@@ -496,15 +518,19 @@ if __name__ == "__main__":
 
 	G = nx.generators.random_graphs.barabasi_albert_graph(100, 3, seed=0)
 	p = 0.1
-	model = 'WC'
+	model = 'IC'
 	no_simulations = 100
-	max_generations = 5
-	n_threads = 1
+	max_generations = 50
+	n_parallel = 8
 	random_seed = 42
 
+	start = time()
 	# seed_sets = moea_influence_maximization(G, p, no_simulations, model, population_size=16, offspring_size=16, random_seed=random_seed, max_generations=max_generations, n_threads=n_threads)
-	seed_set, spread = ea_influence_maximization(k, G, p, no_simulations, model, population_size=16, offspring_size=16,
+	seed_set, spread = ea_influence_maximization(k, G, p, no_simulations, model, population_size=128, offspring_size=128,
 												 random_seed=random_seed, max_generations=max_generations,
-												 n_threads=n_threads)
+												 n_parallel=n_parallel, multithread=False)
+	exec_time = time() - start
+	print("Execution time: ", exec_time)
+
 	print("Seed set: ", seed_set)
-	print("Spread ", spread)
+	print("Spread: ", spread)
