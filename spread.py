@@ -11,11 +11,9 @@ import math
 """
 
 
-def IC_model(G, a, p, random_generator=None):  # a: the set of initial active nodes
+def IC_model(G, a, p, random_generator):  # a: the set of initial active nodes
 	# p: the system-wide probability of influence on an edge, in [0,1]
 
-	if random_generator is None:
-		random_generator = random.Random()
 	A = set(a)  # A: the set of active nodes, initially a
 	B = set(a)  # B: the set of nodes activated in the last completed iteration
 	converged = False
@@ -37,9 +35,6 @@ def IC_model(G, a, p, random_generator=None):  # a: the set of initial active no
 
 def WC_model(G, a, random_generator):  # a: the set of initial active nodes
 	# each edge from node u to v is assigned probability 1/in-degree(v) of activating v
-
-	if random_generator is None:
-		random_generator = random.Random()
 
 	A = set(a)  # A: the set of active nodes, initially a
 	B = set(a)  # B: the set of nodes activated in the last completed iteration
