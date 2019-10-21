@@ -1,5 +1,7 @@
 import unittest
 
+from src.utils import args2cmd
+
 
 class TestMultiprocessing(unittest.TestCase):
 	def __init__(self, *args, **kwargs):
@@ -23,19 +25,6 @@ class TestMultiprocessing(unittest.TestCase):
 
 		self.script = "./src/evolutionaryalgorithm.py"
 
-	def _sh(self, args, exec_name):
-		"""
-		outputs command string with arguments in args
-		:param args: arguments dictionary
-		:param exec_name: string with the name of python script
-		:return: string with command
-		"""
-		out = "python " + exec_name
-		for k, v in args.items():
-			out += " "
-			out += "--{}={}".format(k, v)
-		return out
-
 	def test_results(self):
 		import subprocess
 		import time
@@ -50,14 +39,14 @@ class TestMultiprocessing(unittest.TestCase):
 			# multiprocess
 			self.args["n_parallel"] = 4
 			self.args["out_file"] = "res1.csv"
-			cmd = self._sh(self.args, self.script)
+			cmd = args2cmd(self.args, self.script)
 			print(cmd)
 			subprocess.call(cmd.split())
 
 			# single process
 			self.args["n_parallel"] = 1
 			self.args["out_file"] = "res2.csv"
-			cmd = self._sh(self.args, self.script)
+			cmd = args2cmd(self.args, self.script)
 			subprocess.call(cmd.split())
 
 			# 5 seconds should be enough
