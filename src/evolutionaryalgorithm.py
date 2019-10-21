@@ -4,13 +4,17 @@
 
 # general libraries
 import inspyred
-import logging
 import random
+from functools import partial
 
 from time import time, strftime
 
 # local libraries
-import spread
+
+# spread function, seed set argument of all function should be named "A"
+from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from spread.two_hop import two_hop_spread as two_hop
 
 
 def ea_observer(population, num_generations, num_evaluations, args):
@@ -88,7 +92,7 @@ def ea_alteration_mutation(random, candidate, args):
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
 							  max_generations=100, n_parallel=1, random_seed=None, initial_population=None,
-							  population_file=None, multithread=False):
+							  population_file=None, multithread=False, spread_function=None, max_hop=None):
 	# initialize a generic evolutionary algorithm
 	logging.debug("Initializing Evolutionary Algorithm...")
 	prng = random.Random()
@@ -101,6 +105,15 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 	if population_file == None:
 		ct = time()
 		population_file = strftime("%Y-%m-%d-%H-%M-%S-population.csv")
+
+	if spread_function is None or spread_function == "monte_carlo":
+		spread_function = partial(monte_carlo, no_simulations=no_simulations, random_seed=random_seed, p=p, model=model,
+								  G=G)
+	elif spread_function == "monte_carlo_max_hop":
+		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, random_seed=random_seed, p=p,
+								  model=model, G=G, max_hop = max_hop)
+	elif spread_function == "two_hop":
+		spread_function = partial(two_hop, G=G, p=p, model=model)
 
 	# instantiate a basic EvolutionaryComputation object, that is "empty" (no default methods defined for any component)
 	# so we will need to define every method
@@ -132,7 +145,8 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		population_file=population_file,
 		time_previous_generation=time(),  # this will be updated in the observer
 		random_seed=random_seed,
-		multithread=multithread
+		multithread=multithread,
+		spread_function=spread_function
 	)
 
 	best_individual = max(final_population)
@@ -188,6 +202,7 @@ def ea_evaluator(candidates, args):
 	model = args["model"]
 	no_simulations = args["no_simulations"]
 	random_seed = args["random_seed"]
+	spread_function = args["spread_function"]
 
 	# we start with a list where every element is None
 	fitness = [None] * len(candidates)
@@ -202,8 +217,7 @@ def ea_evaluator(candidates, args):
 			A_set = set(A)
 
 			# TODO consider std inside the fitness in some way?
-			influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model,
-																		 random_seed)
+			influence_mean, influence_std = spread_function(A=A_set)
 			fitness[index] = influence_mean
 
 	else:
@@ -217,7 +231,7 @@ def ea_evaluator(candidates, args):
 			thread_lock = threading.Lock()
 
 			# create list of tasks for the thread pool, using the threaded evaluation function
-			tasks = [(G, p, A, no_simulations, model, fitness, index, thread_lock, random_seed) for index, A in
+			tasks = [(A, fitness, index, thread_lock, spread_function) for index, A in
 					 enumerate(candidates)]
 
 			thread_pool.map(ea_evaluator_threaded, tasks)
@@ -234,19 +248,18 @@ def ea_evaluator(candidates, args):
 			from functools import partial
 			# multiprocessing pool imap function accepts only one argument at a time, create partial function with
 			# constant parameters
-			f = partial(ea_evaluator_processed, G=G, p=p, no_simulations=no_simulations, model=model,
-						random_seed=random_seed)
+			f = partial(ea_evaluator_processed, spread_function=spread_function)
 			fitness = list(process_pool.imap(f, tasks))
 
 	return fitness
 
 
-def ea_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread_lock, random_seed, thread_id):
+def ea_evaluator_threaded(A, fitness, index, thread_lock, spread_function, thread_id):
 	# TODO not sure that this is needed
 	A_set = set(A)
 
 	# run spread simulation
-	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model, random_seed)
+	influence_mean, influence_std = spread_function(A=A_set)
 
 	# lock shared resource, write in it, release
 	thread_lock.acquire()
@@ -256,10 +269,10 @@ def ea_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread
 	return
 
 
-def ea_evaluator_processed(A, G, p, no_simulations, model, random_seed):
+def ea_evaluator_processed(A, spread_function):
 	A = set(A)
 	# run spread simulation
-	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A, p, no_simulations, model, random_seed)
+	influence_mean, influence_std = spread_function(A)
 	return influence_mean
 
 
@@ -285,14 +298,17 @@ if __name__ == "__main__":
 
 	parser.add_argument('--k', type=int, default=5, help='seed set size')
 	parser.add_argument('--p', type=float, default=0.1, help='probability of influence spread in IC model')
+	parser.add_argument('--spread_function', default="monte_carlo", choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
 	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
+	parser.add_argument('--max_hop', type=int, default=2, help='number of max hops for monte carlo max hop function')
 	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=16, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=16, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=44, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
+
 	parser.add_argument('--n_parallel', type=int, default=1,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
@@ -324,7 +340,8 @@ if __name__ == "__main__":
 														   offspring_size=args.offspring_size,
 														   max_generations=args.max_generations,
 														   n_parallel=args.n_parallel, random_seed=args.random_seed,
-														   population_file=args.out_file, multithread=args.multithread)
+														   population_file=args.out_file, multithread=args.multithread,
+														   spread_function=args.spread_function, max_hop=args.max_hop)
 	exec_time = time() - start
 	print("Execution time: ", exec_time)
 

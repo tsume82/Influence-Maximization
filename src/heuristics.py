@@ -1,6 +1,6 @@
 import networkx as nx
 import heapq as hq
-import spread
+from spread import monte_carlo
 
 """ Heuristics for the Influence Maximization problem"""
 
@@ -164,7 +164,7 @@ def general_greedy(k, G, p, no_simulations, model):
 		maxinfl_i = (-1, -1)
 		v_i = -1
 		for v in list(set(G.nodes()) - set(S)):
-			eval_tuple = spread.MonteCarlo_simulation(G, S+[v], p, no_simulations, model)
+			eval_tuple = monte_carlo.MonteCarlo_simulation(G, S + [v], p, no_simulations, model)
 			if eval_tuple[0] > maxinfl_i[0]:
 				maxinfl_i = (eval_tuple[0], eval_tuple[1])
 				v_i = v
@@ -204,12 +204,12 @@ def CELF(k, G, p, no_simulations, model):
 			if curr[s]:
 				A.append(s)
 				# the result for this seed set is:
-				res = spread.MonteCarlo_simulation(G, A, p, no_simulations, model)
+				res = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model)
 				print(len(A), res[0], res[1], A, sep=' ') # mean, stdev, A
 				break
 			else:
-				eval_after  = spread.MonteCarlo_simulation(G, A+[s], p, no_simulations, model)
-				eval_before = spread.MonteCarlo_simulation(G, A, p, no_simulations, model)
+				eval_after  = monte_carlo.MonteCarlo_simulation(G, A + [s], p, no_simulations, model)
+				eval_before = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model)
 				delta[s] = eval_after[0] - eval_before[0]
 				curr[s] = True
 
@@ -233,4 +233,4 @@ if __name__ == "__main__":
 	# A = general_greedy(k, G, p, num_sims, model) # this prints rather than returns
 	# A = CELF(k, G, p, num_sims, model)
 
-	print(A, spread.MonteCarlo_simulation(G, A, p, num_sims, model))
+	print(A, monte_carlo.MonteCarlo_simulation(G, A, p, num_sims, model))

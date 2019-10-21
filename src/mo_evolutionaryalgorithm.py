@@ -4,13 +4,12 @@
 
 # general libraries
 import inspyred
-import logging
 import random
 
 from time import time, strftime
 
 # local libraries
-import spread
+from spread import monte_carlo
 
 """
 Multi-objective evolutionary influence maximization. Parameters:
@@ -106,7 +105,7 @@ def nsga2_evaluator(candidates, args):
 			A_set = set(A)
 
 			# TODO consider std inside the fitness in some way?
-			influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
+			influence_mean, influence_std = monte_carlo.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
 			fitness[index] = inspyred.ec.emo.Pareto([influence_mean, 1.0 / float(len(A_set))])
 
 	else:
@@ -132,7 +131,7 @@ def nsga2_evaluator(candidates, args):
 def nsga2_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread_lock, thread_id):
 	# TODO add logging?
 	A_set = set(A)
-	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
+	influence_mean, influence_std = monte_carlo.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
 
 	# lock data structure before writing in it
 	thread_lock.acquire()
@@ -431,7 +430,7 @@ def ea_evaluator(candidates, args):
 			A_set = set(A)
 
 			# TODO consider std inside the fitness in some way?
-			influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
+			influence_mean, influence_std = monte_carlo.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
 			fitness[index] = influence_mean
 
 	else:
@@ -459,7 +458,7 @@ def ea_evaluator_threaded(G, p, A, no_simulations, model, fitness, index, thread
 	A_set = set(A)
 
 	# run spread simulation
-	influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
+	influence_mean, influence_std = monte_carlo.MonteCarlo_simulation(G, A_set, p, no_simulations, model)
 
 	# lock shared resource, write in it, release
 	thread_lock.acquire()
@@ -482,8 +481,6 @@ if __name__ == "__main__":
 	ch.setLevel(logging.DEBUG)
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
-
-	import load
 
 	k = 5
 	import networkx as nx
