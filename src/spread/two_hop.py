@@ -1,7 +1,7 @@
 # 1-hop and 2-hop spread
 # implementation of the formula defined in "A Fast Approximation for Influence Maximization in Large Social Networks",
 # authors Chin-Wan Chung, Jong-Ryul Lee, 2014
-# link: https://bit.ly/2IJPHxc
+# link: https://dl.acm.org/citation.cfm?id=2567948.2580063
 
 import networkx as nx
 
@@ -96,7 +96,7 @@ def two_hop_spread(G, A, p, model):
 	:param model: propagation model
 	:return:
 	"""
-	# just to keep paper notation
+	# just to keep the paper notation
 	S = A
 	k = len(S)
 	result = 0
