@@ -368,14 +368,14 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		population_file=population_file,
 		time_previous_generation=time(),  # this will be updated in the observer
 		random_seed=random_seed,
-		multithread= multithread,
+		multithread=multithread
 	)
 
 	best_individual = max(final_population)
 	best_seed_set = best_individual.candidate
-	spread = best_individual.fitness
+	best_spread = best_individual.fitness
 
-	return best_seed_set, spread
+	return best_seed_set, best_spread
 
 
 @inspyred.ec.generators.diversify  # decorator that makes it impossible to generate copies
@@ -423,6 +423,7 @@ def ea_evaluator(candidates, args):
 	p = args["p"]
 	model = args["model"]
 	no_simulations = args["no_simulations"]
+	random_seed = args["random_seed"]
 
 	# we start with a list where every element is None
 	fitness = [None] * len(candidates)
@@ -430,7 +431,7 @@ def ea_evaluator(candidates, args):
 	# depending on how many threads we have at our disposal,
 	# we use a different methodology
 	# if we just have one thread, let's just evaluate individuals old style
-	if n_parallel == 1 and args["multithread"]:
+	if n_parallel == 1:
 		for index, A in enumerate(candidates):
 			# TODO sort phenotype, use cache...? or manage sorting directly during individual creation? see lines 108-142 in src_OLD/multiObjective-inspyred/sn-inflmax-inspyred.py
 			# TODO maybe if we make sure that candidates are already sets before getting here, we could save some computational time
@@ -438,7 +439,7 @@ def ea_evaluator(candidates, args):
 
 			# TODO consider std inside the fitness in some way?
 			influence_mean, influence_std = spread.MonteCarlo_simulation(G, A_set, p, no_simulations, model,
-																		 args["random_seed"])
+																		 random_seed)
 			fitness[index] = influence_mean
 
 	else:
@@ -459,7 +460,7 @@ def ea_evaluator(candidates, args):
 
 			# start thread pool and wait for conclusion
 			thread_pool.wait_completion()
-			# thread_pool.
+		# thread_pool.
 		else:
 			# -------------- multiprocessing ----------------
 			from multiprocessing import Pool
@@ -469,7 +470,8 @@ def ea_evaluator(candidates, args):
 			from functools import partial
 			# multiprocessing pool imap function accepts only one argument at a time, create partial function with
 			# constant parameters
-			f = partial(ea_evaluator_processed, G=G, p=p, no_simulations=no_simulations, model=model, random_seed=random_seed)
+			f = partial(ea_evaluator_processed, G=G, p=p, no_simulations=no_simulations, model=model,
+						random_seed=random_seed)
 			fitness = list(process_pool.imap(f, tasks))
 
 	return fitness
@@ -511,26 +513,58 @@ if __name__ == "__main__":
 	ch.setFormatter(formatter)
 	logger.addHandler(ch)
 
-	# import load
-	k = 5
-	# G = load.read_graph("graphs/facebook_combined.txt")
-	import networkx as nx
+	# reading arguments
 
-	G = nx.generators.random_graphs.barabasi_albert_graph(100, 3, seed=0)
-	p = 0.1
-	model = 'IC'
-	no_simulations = 100
-	max_generations = 50
-	n_parallel = 8
-	random_seed = 42
+	import argparse
+
+	parser = argparse.ArgumentParser(description='Evolutionary algorithm computation')
+
+	parser.add_argument('--k', type=int, default=5, help='seed set size')
+	parser.add_argument('--p', type=float, default=0.1, help='probability of influence spread in IC model')
+	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
+																		' when montecarlo mehtod is used')
+	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--population_size', type=int, default=16, help='population size of the ea')
+	parser.add_argument('--offspring_size', type=int, default=16, help='offspring size of the ea')
+	parser.add_argument('--random_seed', type=int, default=44, help='seed to initialize the pseudo-random number '
+																		'generation')
+	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
+	parser.add_argument('--n_parallel', type=int, default=1,
+						help='number of threads or processes to be used for concurrent '
+							 'computation')
+	parser.add_argument('--multithread', type=bool, default=False, help='if true multithreading is used to parallelize'
+																		' execution, otherwise multiprocessing is used')
+	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
+	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
+	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert'], help='graph type')
+	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
+	parser.add_argument('--g_file', default=None, help='location of graph file')
+	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
+
+	args = parser.parse_args()
+
+	if args.g_file is not None:
+		import load
+		G = load.read_graph(args.g_file)
+		# G = load.read_graph("graphs/facebook_combined.txt")
+	else:
+		import networkx as nx
+
+		if args.g_type == "barabasi_albert":
+			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
 
 	start = time()
 	# seed_sets = moea_influence_maximization(G, p, no_simulations, model, population_size=16, offspring_size=16, random_seed=random_seed, max_generations=max_generations, n_threads=n_threads)
-	seed_set, spread = ea_influence_maximization(k, G, p, no_simulations, model, population_size=128, offspring_size=128,
-												 random_seed=random_seed, max_generations=max_generations,
-												 n_parallel=n_parallel, multithread=False)
+	best_seed_set, best_spread = ea_influence_maximization(k=args.k, G=G, p=args.p, no_simulations=args.no_simulations,
+														   model=args.model, population_size=args.population_size,
+														   offspring_size=args.offspring_size,
+														   max_generations=args.max_generations,
+														   n_parallel=args.n_parallel, random_seed=args.random_seed,
+														   population_file=args.out_file, multithread=args.multithread)
 	exec_time = time() - start
 	print("Execution time: ", exec_time)
 
-	print("Seed set: ", seed_set)
-	print("Spread: ", spread)
+	print("Seed set: ", best_seed_set)
+	print("Spread: ", best_spread)
+
+
