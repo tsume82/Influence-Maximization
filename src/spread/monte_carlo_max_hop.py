@@ -60,7 +60,7 @@ def WC_model(G, a, max_hop, random_generator):  # a: the set of initial active n
 	return len(A)
 
 
-def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_seed=None):
+def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_generator=None):
 	"""
 	calculates approximated influence spread of a given seed set A, with
 	information propagation limited to a maximum number of hops
@@ -73,9 +73,7 @@ def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_seed=N
 	:param max_hops: maximum number of hops
 	:return:
 	"""
-	if random_seed is not None:
-		random_generator = random.Random(random_seed)
-	else:
+	if random_generator is None:
 		random_generator = random.Random()
 
 	results = []

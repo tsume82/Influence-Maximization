@@ -92,7 +92,7 @@ def ea_alteration_mutation(random, candidate, args):
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
 							  max_generations=100, n_parallel=1, random_seed=None, initial_population=None,
-							  population_file=None, multithread=False, spread_function=None, max_hop=None):
+							  population_file=None, out_dir=None, multithread=False, spread_function=None, max_hop=None):
 	# initialize a generic evolutionary algorithm
 	logging.debug("Initializing Evolutionary Algorithm...")
 	prng = random.Random()
@@ -105,12 +105,17 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 	if population_file == None:
 		ct = time()
 		population_file = strftime("%Y-%m-%d-%H-%M-%S-population.csv")
+		if out_dir is not None:
+			import os
+			if not os.path.exists(out_dir):
+				os.makedirs(out_dir)
+			population_file = out_dir + "/" + population_file
 
 	if spread_function is None or spread_function == "monte_carlo":
-		spread_function = partial(monte_carlo, no_simulations=no_simulations, random_seed=random_seed, p=p, model=model,
+		spread_function = partial(monte_carlo, no_simulations=no_simulations, random_generator=prng, p=p, model=model,
 								  G=G)
 	elif spread_function == "monte_carlo_max_hop":
-		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, random_seed=random_seed, p=p,
+		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, random_generator=prng, p=p,
 								  model=model, G=G, max_hop = max_hop)
 	elif spread_function == "two_hop":
 		spread_function = partial(two_hop, G=G, p=p, model=model)
@@ -146,7 +151,7 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		time_previous_generation=time(),  # this will be updated in the observer
 		random_seed=random_seed,
 		multithread=multithread,
-		spread_function=spread_function
+		spread_function=spread_function,
 	)
 
 	best_individual = max(final_population)
@@ -320,6 +325,8 @@ if __name__ == "__main__":
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
+	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
+														'to have default name')
 
 	args = parser.parse_args()
 
@@ -340,7 +347,8 @@ if __name__ == "__main__":
 														   offspring_size=args.offspring_size,
 														   max_generations=args.max_generations,
 														   n_parallel=args.n_parallel, random_seed=args.random_seed,
-														   population_file=args.out_file, multithread=args.multithread,
+														   population_file=args.out_file, out_dir=args.out_dir,
+														   multithread=args.multithread,
 														   spread_function=args.spread_function, max_hop=args.max_hop)
 	exec_time = time() - start
 	print("Execution time: ", exec_time)

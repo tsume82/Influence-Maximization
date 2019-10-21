@@ -66,10 +66,8 @@ def WC_model(G, a, random_generator):  # a: the set of initial active nodes
 """
 
 
-def MonteCarlo_simulation(G, A, p, no_simulations, model, random_seed=None):
-	if random_seed is not None:
-		random_generator = random.Random(random_seed)
-	else:
+def MonteCarlo_simulation(G, A, p, no_simulations, model, random_generator=None):
+	if random_generator is None:
 		random_generator = random.Random()
 
 	results = []
