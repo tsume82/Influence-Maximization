@@ -91,4 +91,4 @@ def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_genera
 if __name__ == "__main__":
 	G = nx.path_graph(100)
 	print(nx.classes.function.info(G))
-	print(MonteCarlo_simulation(G, [0, 2, 4, 6, 8, 10], 0.7, 100, 'IC', 2, 0))
+	print(MonteCarlo_simulation(G, [0, 2, 4, 6, 8, 10], 0.7, 100, 'IC', 2, random.Random(0)))
