@@ -71,6 +71,7 @@ if __name__ == "__main__":
 		if not os.path.exists(out_sub_dir):
 			os.makedirs(out_sub_dir)
 		for file in files:
-			run_experiment(sub_dir + "/" + file)
+			if file.lower().endswith(".json"):
+				run_experiment(sub_dir + "/" + file)
 
 
