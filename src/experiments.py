@@ -12,10 +12,23 @@ import subprocess
 from utils import args2cmd
 
 
+def current_commit_revision():
+	"""
+	useful in case checkout to the working version is needed,
+	use 'git checkout <sha1>' to checkout to the needed version
+	:return:
+	"""
+	git_revision_sha1_short = subprocess.check_output("git rev-parse --short HEAD".split())
+	return git_revision_sha1_short.decode("utf-8")
+
+
 def run_experiment(in_file):
 	"""
 	runs experiment according to in_file parameters
-	:param in_file:
+	:param in_file: json file containing fields 'script' with the script name,
+					'script args' with the dictionary of script arguments and
+					'n_repetitions' with the number of times the experiment
+					should run
 	:return:
 	"""
 	data = dict()
@@ -35,11 +48,23 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	in_directory = args.exp_dir + "/in"
-	out_directory = args.exp_dir + "/out"
+	in_directory = args.exp_dir
+	if not ("/in" in in_directory):
+		in_directory += "/in"
+	out_directory = in_directory.replace("/in", "/out")
 
 	if not os.path.exists(out_directory):
 		os.makedirs(out_directory)
+
+	# write the current commit revision
+	sha1 = current_commit_revision()
+	f = open(out_directory + "/commit_revisions", 'a+')
+	f.seek(0)
+	lines = f.readlines()
+	# check if the last commit revision is the one we are still using
+	if len(lines) == 0 or (sha1 not in lines[-1]):
+		f.write(sha1)
+	f.close()
 
 	for sub_dir, _, files in os.walk(in_directory):
 		out_sub_dir = out_directory + sub_dir.split(in_directory)[1]
@@ -47,3 +72,5 @@ if __name__ == "__main__":
 			os.makedirs(out_sub_dir)
 		for file in files:
 			run_experiment(sub_dir + "/" + file)
+
+
