@@ -39,6 +39,7 @@ class TestMultiprocessing(unittest.TestCase):
 			# multiprocess
 			self.args["n_parallel"] = 4
 			self.args["out_file"] = "res1.csv"
+			self.args["log_file"] = "log1.csv"
 			cmd = args2cmd(self.args, self.script)
 			print(cmd)
 			subprocess.call(cmd.split())
@@ -46,6 +47,7 @@ class TestMultiprocessing(unittest.TestCase):
 			# single process
 			self.args["n_parallel"] = 1
 			self.args["out_file"] = "res2.csv"
+			self.args["log_file"] = "log2.csv"
 			cmd = args2cmd(self.args, self.script)
 			subprocess.call(cmd.split())
 
@@ -54,6 +56,6 @@ class TestMultiprocessing(unittest.TestCase):
 
 			files_equal = filecmp.cmp('res1.csv', 'res2.csv')
 
-			subprocess.call("rm res1.csv res2.csv".split())
+			subprocess.call("rm res1.csv res2.csv log1.csv log2.csv".split())
 
 			self.assertTrue(files_equal)

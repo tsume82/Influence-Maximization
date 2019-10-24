@@ -6,6 +6,7 @@
 import inspyred
 import random
 from functools import partial
+import copy
 
 from time import time, strftime
 from utils import dict2csv
@@ -104,10 +105,10 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 
 
 	if spread_function is None or spread_function == "monte_carlo":
-		spread_function = partial(monte_carlo, no_simulations=no_simulations, random_generator=prng, p=p, model=model,
+		spread_function = partial(monte_carlo, no_simulations=no_simulations, p=p, model=model,
 								  G=G)
 	elif spread_function == "monte_carlo_max_hop":
-		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, random_generator=prng, p=p,
+		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, p=p,
 								  model=model, G=G, max_hop = max_hop)
 	elif spread_function == "two_hop":
 		spread_function = partial(two_hop, G=G, p=p, model=model)
@@ -143,6 +144,8 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		time_previous_generation=time(),  # this will be updated in the observer
 		multithread=multithread,
 		spread_function=spread_function,
+		random_generator=random_generator,
+
 	)
 
 	best_individual = max(final_population)
@@ -194,53 +197,20 @@ def ea_super_operator(random, candidate1, candidate2, args):
 def ea_evaluator(candidates, args):
 	n_parallel = args["n_parallel"]
 	spread_function = args["spread_function"]
+	random_generator = args["random_generator"]
 
-	# we start with a list where every element is None
-	fitness = [None] * len(candidates)
+	# -------------- multiprocessing ----------------
+	from multiprocessing import Pool
+	process_pool = Pool(n_parallel)
 
-	# depending on how many threads we have at our disposal,
-	# we use a different methodology
-	# if we just have one thread, let's just evaluate individuals old style
-	if n_parallel == 1:
-		for index, A in enumerate(candidates):
-			# TODO sort phenotype, use cache...? or manage sorting directly during individual creation? see lines 108-142 in src_OLD/multiObjective-inspyred/sn-inflmax-inspyred.py
-			# TODO maybe if we make sure that candidates are already sets before getting here, we could save some computational time
-			A_set = set(A)
-
-			# TODO consider std inside the fitness in some way?
-			influence_mean, influence_std = spread_function(A=A_set)
-			fitness[index] = influence_mean
-
-	else:
-		if args["multithread"]:
-			# create a threadpool, using the local module
-			import threadpool
-			thread_pool = threadpool.ThreadPool(n_parallel)
-
-			# create thread lock, to be used for concurrency
-			import threading
-			thread_lock = threading.Lock()
-
-			# create list of tasks for the thread pool, using the threaded evaluation function
-			tasks = [(A, fitness, index, thread_lock, spread_function) for index, A in
-					 enumerate(candidates)]
-
-			thread_pool.map(ea_evaluator_threaded, tasks)
-
-			# start thread pool and wait for conclusion
-			thread_pool.wait_completion()
-		# thread_pool.
-		else:
-			# -------------- multiprocessing ----------------
-			from multiprocessing import Pool
-			process_pool = Pool(n_parallel)
-
-			tasks = [A for A in candidates]
-			from functools import partial
-			# multiprocessing pool imap function accepts only one argument at a time, create partial function with
-			# constant parameters
-			f = partial(ea_evaluator_processed, spread_function=spread_function)
-			fitness = list(process_pool.imap(f, tasks))
+	tasks = []
+	for A in candidates:
+		tasks.append([A, random_generator.random()])
+	from functools import partial
+	# multiprocessing pool imap function accepts only one argument at a time, create partial function with
+	# constant parameters
+	f = partial(ea_evaluator_processed, spread_function=spread_function)
+	fitness = list(process_pool.imap(f, tasks))
 
 	return fitness
 
@@ -260,10 +230,11 @@ def ea_evaluator_threaded(A, fitness, index, thread_lock, spread_function, threa
 	return
 
 
-def ea_evaluator_processed(A, spread_function):
+def ea_evaluator_processed(args, spread_function):
+	A, random_seed = args
 	A = set(A)
 	# run spread simulation
-	influence_mean, influence_std = spread_function(A)
+	influence_mean, influence_std = spread_function(A=A, random_generator=random.Random(random_seed))
 	return influence_mean
 
 
@@ -300,7 +271,7 @@ if __name__ == "__main__":
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
 
-	parser.add_argument('--n_parallel', type=int, default=1,
+	parser.add_argument('--n_parallel', type=int, default=3,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--multithread', type=bool, default=False, help='if true multithreading is used to parallelize'
@@ -311,6 +282,8 @@ if __name__ == "__main__":
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
+	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
+	parser.add_argument('--out_name', default=None, help='string that will be inserted in out file names')
 	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
 														'to have default name')
 	parser.add_argument('--print_mc_best', type=bool, default=True, help='if true calculates montecarlo spread function'
@@ -340,6 +313,8 @@ if __name__ == "__main__":
 
 	# out file names / directory creation
 
+	time_str = strftime("_%Y-%m-%d-%H-%M-%S")
+
 	if args.out_dir is None:
 		out_dir = "."
 	else:
@@ -347,16 +322,21 @@ if __name__ == "__main__":
 		import os
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
-		
-	if args.out_file is None:
-		out_file = ""
+
+	if args.out_name is None:
+		out_name = ""
 	else:
-		out_file = args.out_file
+		out_name = args.out_name
 
-	time_str = strftime("%Y-%m-%d-%H-%M-%S")
+	if args.out_file is None:
+		population_file = out_dir + "/" + "population_" + out_name + time_str + ".csv"
+	else:
+		population_file = args.out_file
 
-	population_file = out_dir + "/" + "population_" + out_file + time_str + ".csv"
-	log_file = out_dir + "/" + "log_" + out_file + time_str + ".csv"
+	if args.log_file is None:
+		log_file = out_dir + "/" + "log_" + out_name + time_str + ".csv"
+	else:
+		log_file = args.log_file
 
 	start = time()
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k, G=G, p=args.p, no_simulations=args.no_simulations,
