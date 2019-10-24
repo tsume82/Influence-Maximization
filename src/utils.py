@@ -1,3 +1,5 @@
+import collections
+
 
 def args2cmd(args, exec_name):
 	"""
@@ -23,3 +25,37 @@ def dict2csv(args, csv_name):
 	with open(csv_name, "w") as f:
 		f.write(",".join(args.keys()) + "\n")
 		f.write(",".join(str(x) for x in args.values()) + "\n")
+
+
+class ReadOnlyWrapper(collections.Mapping):
+	"""
+	To make dicts read only (stackoverflow).
+
+	"""
+
+	def __init__(self, data):
+		self._data = data
+
+	def __getitem__(self, key):
+		return self._data[key]
+
+	def __len__(self):
+		return len(self._data)
+
+	def __iter__(self):
+		return iter(self._data)
+
+	def __str__(self):
+		return str(self._data)
+
+	def get_copy(self):
+		return self._data.copy()
+
+
+def make_dict_read_only(dict):
+	"""
+	Make a dictionary into a new read only dictionary.
+	:param dict:
+	:return:
+	"""
+	return ReadOnlyWrapper(dict)

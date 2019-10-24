@@ -22,18 +22,23 @@ def current_commit_revision():
 	return git_revision_sha1_short.decode("utf-8")
 
 
-def run_experiment(in_file):
+def run_experiment(in_file, out_dir):
 	"""
 	runs experiment according to in_file parameters
 	:param in_file: json file containing fields 'script' with the script name,
 					'script args' with the dictionary of script arguments and
 					'n_repetitions' with the number of times the experiment
 					should run
+	:out_dir: directory where the results will be stored
 	:return:
 	"""
 	data = dict()
 	with open(in_file, "r") as f:
 		data = json.load(f)
+
+	# assumption: script function should have argument "out_dir"
+	if "out_dir" not in data["script_args"].keys():
+		data["script_args"]["out_dir"] = out_dir
 
 	cmd = args2cmd(args=data["script_args"], exec_name=data["script"])
 	for _ in range(data["n_repetitions"]):
@@ -72,5 +77,5 @@ if __name__ == "__main__":
 			os.makedirs(out_sub_dir)
 		for file in files:
 			if file.lower().endswith(".json"):
-				run_experiment(sub_dir + "/" + file)
+				run_experiment(sub_dir + "/" + file, out_sub_dir)
 
