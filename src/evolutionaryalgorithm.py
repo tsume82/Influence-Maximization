@@ -234,7 +234,10 @@ def ea_evaluator_processed(args, spread_function):
 	A, random_seed = args
 	A = set(A)
 	# run spread simulation
-	influence_mean, influence_std = spread_function(A=A, random_generator=random.Random(random_seed))
+	if spread_function.func != two_hop:
+		influence_mean, influence_std = spread_function(A=A, random_generator=random.Random(random_seed))
+	else:
+		influence_mean, influence_std = spread_function(A=A)
 	return influence_mean
 
 
