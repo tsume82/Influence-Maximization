@@ -8,6 +8,7 @@ import random
 from functools import partial
 
 from time import time, strftime
+from utils import dict2csv
 
 # local libraries
 
@@ -91,25 +92,16 @@ def ea_alteration_mutation(random, candidate, args):
 
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
-							  max_generations=100, n_parallel=1, random_seed=None, initial_population=None,
-							  population_file=None, out_dir=None, multithread=False, spread_function=None, max_hop=None):
+							  max_generations=100, n_parallel=1, random_generator=None, initial_population=None,
+							  population_file=None, multithread=False, spread_function=None, max_hop=None):
 	# initialize a generic evolutionary algorithm
 	logging.debug("Initializing Evolutionary Algorithm...")
-	prng = random.Random()
-	if random_seed == None: random_seed = time()
-	logging.debug("Random number generator seeded with %s" % str(random_seed))
-	prng.seed(random_seed)
+	if random_generator is None:
+		random_generator = random.Random()
 
 	# check if some of the optional parameters are set; otherwise, use default values
 	nodes = list(G.nodes)
-	if population_file == None:
-		ct = time()
-		population_file = strftime("%Y-%m-%d-%H-%M-%S-population.csv")
-		if out_dir is not None:
-			import os
-			if not os.path.exists(out_dir):
-				os.makedirs(out_dir)
-			population_file = out_dir + "/" + population_file
+
 
 	if spread_function is None or spread_function == "monte_carlo":
 		spread_function = partial(monte_carlo, no_simulations=no_simulations, random_generator=prng, p=p, model=model,
@@ -149,7 +141,6 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		n_parallel=n_parallel,
 		population_file=population_file,
 		time_previous_generation=time(),  # this will be updated in the observer
-		random_seed=random_seed,
 		multithread=multithread,
 		spread_function=spread_function,
 	)
@@ -202,11 +193,6 @@ def ea_super_operator(random, candidate1, candidate2, args):
 
 def ea_evaluator(candidates, args):
 	n_parallel = args["n_parallel"]
-	G = args["G"]
-	p = args["p"]
-	model = args["model"]
-	no_simulations = args["no_simulations"]
-	random_seed = args["random_seed"]
 	spread_function = args["spread_function"]
 
 	# we start with a list where every element is None
@@ -327,6 +313,8 @@ if __name__ == "__main__":
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
 	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
 														'to have default name')
+	parser.add_argument('--print_mc_best', type=bool, default=True, help='if true calculates montecarlo spread function'
+																		  'of the best seed set')
 
 	args = parser.parse_args()
 
@@ -341,17 +329,61 @@ if __name__ == "__main__":
 		if args.g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
 
+	# random generator
+	prng = random.Random()
+	if args.random_seed is None:
+		random_seed = time()
+	else:
+		random_seed = args.random_seed
+	logging.debug("Random number generator seeded with %s" % str(args.random_seed))
+	prng.seed(random_seed)
+
+	# out file names / directory creation
+
+	if args.out_dir is None:
+		out_dir = "."
+	else:
+		out_dir = args.out_dir
+		import os
+		if not os.path.exists(out_dir):
+			os.makedirs(out_dir)
+		
+	if args.out_file is None:
+		out_file = ""
+	else:
+		out_file = args.out_file
+
+	time_str = strftime("%Y-%m-%d-%H-%M-%S")
+
+	population_file = out_dir + "/" + "population_" + out_file + time_str + ".csv"
+	log_file = out_dir + "/" + "log_" + out_file + time_str + ".csv"
+
 	start = time()
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k, G=G, p=args.p, no_simulations=args.no_simulations,
 														   model=args.model, population_size=args.population_size,
 														   offspring_size=args.offspring_size,
 														   max_generations=args.max_generations,
-														   n_parallel=args.n_parallel, random_seed=args.random_seed,
-														   population_file=args.out_file, out_dir=args.out_dir,
+														   n_parallel=args.n_parallel, random_generator=prng,
+														   population_file=population_file,
 														   multithread=args.multithread,
 														   spread_function=args.spread_function, max_hop=args.max_hop)
 	exec_time = time() - start
+
 	print("Execution time: ", exec_time)
 
 	print("Seed set: ", best_seed_set)
 	print("Spread: ", best_spread)
+
+	best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
+	if args.print_mc_best:
+		print("Best monte carlo spread: ", best_mc_spread)
+
+	# write experiment log
+
+	out_dict = args.__dict__
+	out_dict["exec_time"] = exec_time
+	out_dict["best_fitness"] = best_spread
+	out_dict["best_mc_spread"] = best_mc_spread
+
+	dict2csv(args=out_dict, csv_name=log_file)
+
