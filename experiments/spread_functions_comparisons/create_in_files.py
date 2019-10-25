@@ -42,33 +42,36 @@ Max_gen = [5, 10, 15, 20, 30]
 MC_simulations = [10, 50, 100, 500, 1000]
 
 
-vars2compare = ['p', 'k', 'population_size', 'max_generations', 'no_simulatins']
+vars2compare = ['p', 'k', 'population_size', 'max_generations', 'no_simulations']
 values = [P, K, Pop_size, Max_gen, MC_simulations]
 spread_functions = ["monte_carlo", "monte_carlo_max_hop", "two_hop"]
 models = ["IC", "WC"]
+graph_types = ["barabasi_albert", "gaussian_random_partition"]
 for i, var in enumerate(vars2compare):
 	for value in values[i]:
 		for spr_func in spread_functions:
 			for model in models:
 				for seed in random_seeds:
-					args = default_values_dict().get_copy()
-					args[var] = value
-					if var == 'population_size':
-						args['offspring_size'] = value
-					args["spread_function"] = spr_func
-					args["model"] = model
-					args["out_name"] = "{}_{}_".format(var, value)
-					args["random_seed"] = seed
+					for graph_t in graph_types:
+						args = default_values_dict().get_copy()
+						args[var] = value
+						if var == 'population_size':
+							args['offspring_size'] = value
+						args["spread_function"] = spr_func
+						args["model"] = model
+						args["out_name"] = "{}_{}_".format(var, value)
+						args["random_seed"] = seed
+						args["g_type"] = graph_t
 
-					# write out_file
-					in_dir = "./in/" + var + "/" + model + "/" + spr_func + "/" + "{}".format(value)
-					if not os.path.exists(in_dir):
-						os.makedirs(in_dir)
+						# write out_file
+						in_dir = "./in/" + graph_t + "/" + var + "/" + model + "/" + spr_func + "/" + "{}".format(value)
+						if not os.path.exists(in_dir):
+							os.makedirs(in_dir)
 
-					data = dict()
-					data["script"] = script
-					data["n_repetitions"] = n_repetitions
-					data["script_args"] = args
+						data = dict()
+						data["script"] = script
+						data["n_repetitions"] = n_repetitions
+						data["script_args"] = args
 
-					with open(in_dir + '/' + 'seed_{}_'.format(seed) + 'exp_in.json', 'w') as outfile:
-						json.dump(data, outfile, indent=4)
+						with open(in_dir + '/' + 'seed_{}_'.format(seed) + 'exp_in.json', 'w') as outfile:
+							json.dump(data, outfile, indent=4)

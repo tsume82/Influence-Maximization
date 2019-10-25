@@ -278,7 +278,7 @@ if __name__ == "__main__":
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert'], help='graph type')
+	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition'], help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
@@ -299,6 +299,8 @@ if __name__ == "__main__":
 
 		if args.g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
+		elif args.g_type == "gaussian_random_partition":
+			G = nx.gaussian_random_partition_graph(n=args.g_nodes, s=10, v=10, p_in=0.25, p_out=0.1, seed=args.g_seed)
 
 	# random generator
 	prng = random.Random()
