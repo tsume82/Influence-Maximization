@@ -94,7 +94,7 @@ def ea_alteration_mutation(random, candidate, args):
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
 							  max_generations=100, n_parallel=1, random_generator=None, initial_population=None,
-							  population_file=None, multithread=False, spread_function=None, max_hop=None):
+							  population_file=None, spread_function=None, max_hop=None):
 	# initialize a generic evolutionary algorithm
 	logging.debug("Initializing Evolutionary Algorithm...")
 	if random_generator is None:
@@ -142,7 +142,6 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		n_parallel=n_parallel,
 		population_file=population_file,
 		time_previous_generation=time(),  # this will be updated in the observer
-		multithread=multithread,
 		spread_function=spread_function,
 		random_generator=random_generator,
 
@@ -277,8 +276,6 @@ if __name__ == "__main__":
 	parser.add_argument('--n_parallel', type=int, default=3,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
-	parser.add_argument('--multithread', type=bool, default=False, help='if true multithreading is used to parallelize'
-																		' execution, otherwise multiprocessing is used')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
 	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert'], help='graph type')
@@ -289,8 +286,6 @@ if __name__ == "__main__":
 	parser.add_argument('--out_name', default=None, help='string that will be inserted in out file names')
 	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
 														'to have default name')
-	parser.add_argument('--print_mc_best', type=bool, default=True, help='if true calculates montecarlo spread function'
-																		  'of the best seed set')
 
 	args = parser.parse_args()
 
@@ -348,7 +343,6 @@ if __name__ == "__main__":
 														   max_generations=args.max_generations,
 														   n_parallel=args.n_parallel, random_generator=prng,
 														   population_file=population_file,
-														   multithread=args.multithread,
 														   spread_function=args.spread_function, max_hop=args.max_hop)
 	exec_time = time() - start
 
@@ -358,8 +352,7 @@ if __name__ == "__main__":
 	print("Spread: ", best_spread)
 
 	best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
-	if args.print_mc_best:
-		print("Best monte carlo spread: ", best_mc_spread)
+	print("Best monte carlo spread: ", best_mc_spread)
 
 	# write experiment log
 
