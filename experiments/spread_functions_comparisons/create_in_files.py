@@ -9,7 +9,7 @@ def default_values_dict():
 	args["k"] = 5
 	args["p"] = 0.3
 	# args["spread_function"] =
-	args["no_simulations"] = 10
+	args["no_simulations"] = 100
 	args["max_hop"] = 2
 	# args["model"] =
 	args["population_size"] = 16
