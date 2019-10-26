@@ -34,20 +34,19 @@ random_seeds = range(5)
 
 script = "src/evolutionaryalgorithm.py"
 
-K = [1]
-# K = [1, 2, 5, 7, 10]
-# P = [0.1, 0.3, 0.5, 0.7, 0.9]
-# Pop_size = [8, 16, 32, 64, 128]
-# Max_gen = [5, 10, 15, 20, 30]
-# MC_simulations = [10, 50, 100, 500, 1000]
+K = [1, 2, 5, 7, 10]
+P = [0.1, 0.3, 0.5, 0.7, 0.9]
+Pop_size = [8, 16, 32, 64, 128]
+Max_gen = [5, 10, 15, 20, 30]
+MC_simulations = [10, 50, 100, 500, 1000]
 
 
-vars2compare = ['k']
-values = [K]
+vars2compare = ['p', 'k', 'population_size', 'max_generations', 'no_simulations']
+values = [P, K, Pop_size, Max_gen, MC_simulations]
 spread_functions = ["monte_carlo", "monte_carlo_max_hop", "two_hop"]
 models = ["IC", "WC"]
 # graph_types = ["barabasi_albert", "gaussian_random_partition"]
-graph_types = ["barabasi_albert"]
+graph_types = ["gaussian_random_partition"]
 for i, var in enumerate(vars2compare):
 	for value in values[i]:
 		for spr_func in spread_functions:
