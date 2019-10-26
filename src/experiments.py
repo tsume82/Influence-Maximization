@@ -22,7 +22,7 @@ def current_commit_revision():
 	return git_revision_sha1_short.decode("utf-8")
 
 
-def run_experiment(in_file, out_dir):
+def run_experiment(in_file, out_dir, hpc=False):
 	"""
 	runs experiment according to in_file parameters
 	:param in_file: json file containing fields 'script' with the script name,
@@ -40,7 +40,7 @@ def run_experiment(in_file, out_dir):
 	if "out_dir" not in data["script_args"].keys():
 		data["script_args"]["out_dir"] = out_dir
 
-	cmd = args2cmd(args=data["script_args"], exec_name=data["script"])
+	cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
 	for _ in range(data["n_repetitions"]):
 		subprocess.call(cmd.split())
 
@@ -50,8 +50,12 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Experiments run')
 	parser.add_argument('--exp_dir', help="experiment directory")
+	parser.add_argument('--hpc', default=False)
 
 	args = parser.parse_args()
+
+	if args.hpc:
+		os.chdir("./Influence-Maximization")
 
 	in_directory = args.exp_dir
 	if not ("/in" in in_directory):
@@ -77,5 +81,5 @@ if __name__ == "__main__":
 			os.makedirs(out_sub_dir)
 		for file in files:
 			if file.lower().endswith(".json"):
-				run_experiment(sub_dir + "/" + file, out_sub_dir)
+				run_experiment(sub_dir + "/" + file, out_sub_dir, hpc=args.hpc)
 

@@ -1,14 +1,17 @@
 import collections
 
 
-def args2cmd(args, exec_name):
+def args2cmd(args, exec_name, hpc=False):
 	"""
 	outputs command string with arguments in args
 	:param args: arguments dictionary
 	:param exec_name: string with the name of python script
 	:return: string with command
 	"""
-	out = "python " + exec_name
+	if hpc:
+		out = "python3 " + exec_name
+	else:
+		out = "python " + exec_name
 	for k, v in args.items():
 		out += " "
 		out += "--{}={}".format(k, v)
