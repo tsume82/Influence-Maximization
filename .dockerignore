@@ -1,0 +1,11 @@
+# Virtual Environment
+
+venv/
+
+# Project Settings
+
+.idea/
+
+# git
+
+.git/
