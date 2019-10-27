@@ -1,0 +1,2 @@
+k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
+1,0.3,two_hop,100,2,IC,64,64,3,15,4,1000,3,gaussian_random_partition,0,None,None,None,k_1_,../experiments/smart_initialization_comparison/out/gaussian_random_partition/closeness/k/IC/1,closeness,31.61920690536499,1173.1600000000003,1000.0
