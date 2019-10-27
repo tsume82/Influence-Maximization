@@ -1,6 +1,10 @@
 """Evolutionary Algorithm"""
 
-"""The functions in this script run Evolutionary Algorithms for influence maximization. Ideally, it will eventually contain both the single-objective (maximize influence with a fixed amount of seed nodes) and multi-objective (maximize influence, minimize number of seed nodes) versions. This relies upon the inspyred Python library for evolutionary algorithms."""
+"""The functions in this script run Evolutionary Algorithms for influence maximization. 
+Ideally, it will eventually contain both the single-objective (maximize influence with a fixed 
+amount of seed nodes) and multi-objective (maximize influence, minimize number of seed nodes) versions. 
+This relies upon the inspyred Python library for evolutionary algorithms."""
+
 
 # general libraries
 import inspyred
@@ -17,6 +21,8 @@ from utils import dict2csv
 from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
 from spread.two_hop import two_hop_spread as two_hop
+
+from smart_initialization import max_centrality_individual
 
 
 def ea_observer(population, num_generations, num_evaluations, args):
@@ -169,7 +175,8 @@ def ea_generator(random, args):
 	return individual
 
 
-@inspyred.ec.variators.crossover  # decorator that defines the operator as a crossover, even if it isn't in this case :-)
+@inspyred.ec.variators.crossover  
+# decorator that defines the operator as a crossover, even if it isn't in this case :-)
 def ea_super_operator(random, candidate1, candidate2, args):
 	k = args["k"]
 	children = []
@@ -273,7 +280,7 @@ if __name__ == "__main__":
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
 
-	parser.add_argument('--n_parallel', type=int, default=3,
+	parser.add_argument('--n_parallel', type=int, default=4,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
@@ -286,6 +293,10 @@ if __name__ == "__main__":
 	parser.add_argument('--out_name', default=None, help='string that will be inserted in out file names')
 	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
 														'to have default name')
+	parser.add_argument('--smart_initialization', default="", choices=["", "degree", "eigenvector", "katz", "closeness",
+							  "betweenness", "second_order"], help='if set, an individual containing best nodes according'
+																   'to the selected centrality metric will be inesrted'
+																   'into the initial population')
 
 	args = parser.parse_args()
 
@@ -338,12 +349,19 @@ if __name__ == "__main__":
 	else:
 		log_file = args.log_file
 
+	# smart initialization
+	initial_population = None
+	if args.smart_initialization != "":
+		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
+		initial_population = [smart_individual]
+
 	start = time()
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k, G=G, p=args.p, no_simulations=args.no_simulations,
 														   model=args.model, population_size=args.population_size,
 														   offspring_size=args.offspring_size,
 														   max_generations=args.max_generations,
 														   n_parallel=args.n_parallel, random_generator=prng,
+														   initial_population=initial_population,
 														   population_file=population_file,
 														   spread_function=args.spread_function, max_hop=args.max_hop)
 	exec_time = time() - start
@@ -364,4 +382,3 @@ if __name__ == "__main__":
 	out_dict["best_mc_spread"] = best_mc_spread
 
 	dict2csv(args=out_dict, csv_name=log_file)
-
