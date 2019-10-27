@@ -10,12 +10,12 @@ WORKDIR /Influence-Maximization/src
 COPY ./ /Influence-Maximization
 
 ENTRYPOINT python /Influence-Maximization/src/experiments.py --exp_dir=../experiments/smart_initialization_comparison
+#ENTRYPOINT rm -r /Influence-Maximization/experiments/smart_initialization_comparison/out
 
 # docker build . -t inf-max
-# docker run --name "inf-max" inf-max
 # docker start inf-max
 # docker ps -a
 # docker stop inf-max
 # docker rm inf-max
 # docker rm -f $(docker ps -aq)
-# docker run --rm -v $(pwd):/Influence-Maximization/:rw inf-max
+# docker run -it --rm -v $(pwd):/Influence-Maximization/:rw --user $(id -u):$(id -g) inf-max
