@@ -1,0 +1,1 @@
+qstat -t -u $USER
