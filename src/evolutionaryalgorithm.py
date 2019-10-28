@@ -32,7 +32,7 @@ def ea_observer(population, num_generations, num_evaluations, args):
 	args['time_previous_generation'] = currentTime
 
 	best = max(population)
-	logging.info('[{0:.2f} s] Generation {1:6} -- {2}'.format(timeElapsed, num_generations, best.fitness))
+	# logging.info('[{0:.2f} s] Generation {1:6} -- {2}'.format(timeElapsed, num_generations, best.fitness))
 
 	# TODO write current state of the ALGORITHM to a file (e.g. random number generator, time elapsed, stuff like that)
 	# write current state of the population to a file
@@ -102,7 +102,7 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 							  max_generations=100, n_parallel=1, random_generator=None, initial_population=None,
 							  population_file=None, spread_function=None, max_hop=None):
 	# initialize a generic evolutionary algorithm
-	logging.debug("Initializing Evolutionary Algorithm...")
+	# logging.debug("Initializing Evolutionary Algorithm...")
 	if random_generator is None:
 		random_generator = random.Random()
 
@@ -168,9 +168,9 @@ def ea_generator(random, args):
 
 	# extract random number in 1,max_seed_nodes
 	individual = [0] * k
-	logging.debug("Creating individual of size %d, with genes ranging from %d to %d" % (k, nodes[0], nodes[-1]))
+	# logging.debug("Creating individual of size %d, with genes ranging from %d to %d" % (k, nodes[0], nodes[-1]))
 	for i in range(0, k): individual[i] = nodes[random.randint(0, len(nodes) - 1)]
-	logging.debug(individual)
+	# logging.debug(individual)
 
 	return individual
 
@@ -191,8 +191,8 @@ def ea_super_operator(random, candidate1, candidate2, args):
 		children.append(ea_alteration_mutation(random, list(candidate1), args))
 
 	# this should probably be commented or sent to logging
-	for c in children: logging.debug(
-		"randomChoice=%d : from parent of size %d, created child of size %d" % (randomChoice, len(candidate1), len(c)))
+	# for c in children: logging.debug(
+	# 	"randomChoice=%d : from parent of size %d, created child of size %d" % (randomChoice, len(candidate1), len(c)))
 
 	# purge the children from "None" and arrays of the wrong size
 	children = [c for c in children if c is not None and len(set(c)) == k]
@@ -250,16 +250,16 @@ def ea_evaluator_processed(args, spread_function):
 # this main here is just to test the current implementation
 if __name__ == "__main__":
 	# initialize logging
-	import logging
-
-	logger = logging.getLogger('')
-	logger.setLevel(logging.DEBUG)  # TODO switch between INFO and DEBUG for less or more in-depth logging
-	formatter = logging.Formatter('[%(levelname)s %(asctime)s] %(message)s', '%Y-%m-%d %H:%M:%S')
-
-	ch = logging.StreamHandler()
-	ch.setLevel(logging.DEBUG)
-	ch.setFormatter(formatter)
-	logger.addHandler(ch)
+	# import logging
+	#
+	# logger = logging.getLogger('')
+	# logger.setLevel(logging.DEBUG)  # TODO switch between INFO and DEBUG for less or more in-depth logging
+	# formatter = logging.Formatter('[%(levelname)s %(asctime)s] %(message)s', '%Y-%m-%d %H:%M:%S')
+	#
+	# ch = logging.StreamHandler()
+	# ch.setLevel(logging.DEBUG)
+	# ch.setFormatter(formatter)
+	# logger.addHandler(ch)
 
 	# reading arguments
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
 	parser.add_argument('--g_file', default=None, help='location of graph file')
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
 	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
-	parser.add_argument('--out_name', default=None, help='string that will be inserted in out file names')
+	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
 	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
 														'to have default name')
 	parser.add_argument('--smart_initialization', default="", choices=["", "degree", "eigenvector", "katz", "closeness",
@@ -319,12 +319,10 @@ if __name__ == "__main__":
 		random_seed = time()
 	else:
 		random_seed = args.random_seed
-	logging.debug("Random number generator seeded with %s" % str(args.random_seed))
+	# logging.debug("Random number generator seeded with %s" % str(args.random_seed))
 	prng.seed(random_seed)
 
 	# out file names / directory creation
-
-	time_str = strftime("_%Y-%m-%d-%H-%M-%S")
 
 	if args.out_dir is None:
 		out_dir = "."
@@ -335,17 +333,17 @@ if __name__ == "__main__":
 			os.makedirs(out_dir)
 
 	if args.out_name is None:
-		out_name = ""
+		out_name = ".csv"
 	else:
 		out_name = args.out_name
 
 	if args.out_file is None:
-		population_file = out_dir + "/" + "population_" + out_name + time_str + ".csv"
+		population_file = out_dir + "/" + "population_" + out_name
 	else:
 		population_file = args.out_file
 
 	if args.log_file is None:
-		log_file = out_dir + "/" + "log_" + out_name + time_str + ".csv"
+		log_file = out_dir + "/" + "log_" + out_name
 	else:
 		log_file = args.log_file
 

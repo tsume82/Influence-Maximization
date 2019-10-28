@@ -36,13 +36,25 @@ def run_experiment(in_file, out_dir, hpc=False):
 	with open(in_file, "r") as f:
 		data = json.load(f)
 
-	# assumption: script function should have argument "out_dir"
-	if "out_dir" not in data["script_args"].keys():
-		data["script_args"]["out_dir"] = out_dir
-
-	cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
-	for _ in range(data["n_repetitions"]):
-		subprocess.call(cmd.split())
+	for i in range(data["n_repetitions"]):
+		print("-------------------------------")
+		print("Repetition {}".format(i))
+		# assumption: script function should have argument "out_dir"
+		out_dir_arg = out_dir
+		if "out_dir" not in data["script_args"].keys():
+			out_dir_arg += "/" + "repetition_{}".format(i)
+			data["script_args"]["out_dir"] = out_dir_arg
+			if not os.path.exists(out_dir_arg):
+				os.makedirs(out_dir_arg)
+		cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
+		already_done = False
+		# ! important assumption: at the end of the execution computation script will produce log file containing
+		#  string "log" in its name
+		for f_name in os.listdir(out_dir_arg):
+			if "log" in f_name:
+				already_done = True
+		if not already_done:
+			subprocess.call(cmd.split())
 
 
 if __name__ == "__main__":
@@ -75,11 +87,23 @@ if __name__ == "__main__":
 		f.write(sha1)
 	f.close()
 
+	tot_experiments = 0
+	for sub_dir, _, files in os.walk(in_directory):
+		for file in files:
+			if file.lower().endswith(".json"):
+				tot_experiments += 1
+
+	n_exp = 0
+
 	for sub_dir, _, files in os.walk(in_directory):
 		out_sub_dir = out_directory + sub_dir.split(in_directory)[1]
 		if not os.path.exists(out_sub_dir):
 			os.makedirs(out_sub_dir)
 		for file in files:
 			if file.lower().endswith(".json"):
-				run_experiment(sub_dir + "/" + file, out_sub_dir, hpc=args.hpc)
-
+				# for each experiment and for each its repetition create a directory containing the results
+				n_exp += 1
+				print("-------------------------------")
+				print("Experiment {}/{}".format(n_exp, tot_experiments))
+				print("Experiment config file: {}".format(sub_dir + "/" + file))
+				run_experiment(sub_dir + "/" + file, out_sub_dir + "/" + file.replace(".json", ""), hpc=args.hpc)
