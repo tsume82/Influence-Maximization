@@ -12,6 +12,7 @@
 #PBS -q common_cpuQ
 module load python-3.7.2
 pip3 install inspyred
-RUN pip3 install networkx
-RUN pip3 install numpy
-python3 Influence-Maximization/src/experiments.py --exp_dir=../experiments/test
+pip3 install networkx
+pip3 install numpy
+cd Influence-Maximization/src/
+python3 experiments.py --exp_dir=../experiments/test --hpc=True

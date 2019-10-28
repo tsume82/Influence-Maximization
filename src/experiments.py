@@ -66,9 +66,6 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	if args.hpc:
-		os.chdir("./Influence-Maximization")
-
 	in_directory = args.exp_dir
 	if not ("/in" in in_directory):
 		in_directory += "/in"
