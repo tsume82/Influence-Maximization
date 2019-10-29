@@ -16,7 +16,6 @@ class TestMultiprocessing(unittest.TestCase):
 		self.args["random_seed"] = 0
 		self.args["max_generations"] = 10
 		self.args["n_parallel"] = 1
-		self.args["multithread"] = False
 		self.args["g_nodes"] = 100
 		self.args["g_new_edges"] = 3
 		self.args["g_type"] = "barabasi_albert"

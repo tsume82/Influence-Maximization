@@ -74,7 +74,7 @@ def two_hop_spread(G, A):
 			result += ps_c*(sigma_c-pc_s)
 	else:
 		for s in S:
-			result += two_hop_spread(G, [s])[0]
+			result += two_hop_spread(G, [s])
 			Cs = set(neighbours(G, s))
 			Cs = Cs.intersection(S)
 			for c in Cs:
@@ -83,7 +83,7 @@ def two_hop_spread(G, A):
 				pc_s = G[c][s]["weight"]
 				result -= ps_c*(sigma_c-pc_s)
 
-	return result, 0
+	return result
 
 
 if __name__ == "__main__":
