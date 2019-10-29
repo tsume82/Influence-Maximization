@@ -12,6 +12,10 @@ class TestTwoHopSpread(unittest.TestCase):
 		self.G_IC = add_weights_IC(G, 0.1)
 		self.G_WC = add_weights_WC(G)
 
+		G2 = nx.generators.random_graphs.barabasi_albert_graph(7, 2, seed=1)
+		self.G2_IC = add_weights_IC(G2, 0.1)
+		self.G2_WC = add_weights_WC(G2)
+
 	def test_one_hop(self):
 		one_hop_spr = one_hop_spread_single_node(self.G_IC, 4)
 		# eliminate error due to machine approximation
@@ -31,3 +35,12 @@ class TestTwoHopSpread(unittest.TestCase):
 		two_hop_spr = two_hop_spread(self.G_WC, S)
 		two_hop_spr = round(two_hop_spr, 5)
 		self.assertEqual(two_hop_spr, 4.25)
+
+		S2 = [0, 2, 5]
+		two_hop_spr = two_hop_spread(self.G2_IC, S2)
+		two_hop_spr = round(two_hop_spr, 5)
+		self.assertEqual(two_hop_spr, 3.69)
+
+		two_hop_spr = two_hop_spread(self.G2_WC, S2)
+		two_hop_spr = round(two_hop_spr, 5)
+		self.assertEqual(two_hop_spr, 5.95833)
