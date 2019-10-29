@@ -1,4 +1,5 @@
 import collections
+import networkx as nx
 
 
 def args2cmd(args, exec_name, hpc=False):
@@ -62,3 +63,60 @@ def make_dict_read_only(dict):
 	:return:
 	"""
 	return ReadOnlyWrapper(dict)
+
+
+def add_weights_IC(G, p):
+	"""
+	adds spread probabilities as edge weights to networkx graph under Independent Cascade model
+	:param G:
+	:param p:
+	:return:
+	"""
+	weighted_edges = []
+	for a in G.adjacency():
+		u, V = a
+		for v in V:
+			weighted_edges.append((u, v, p))
+	G_c = G.copy()
+	G_c.add_weighted_edges_from(weighted_edges)
+	return G_c
+
+
+def degree_function(G):
+	"""
+	degree function for WC model probability calculation
+	:param G:
+	:return:
+	"""
+	if nx.is_directed(G):
+		function = G.in_degree
+	else:
+		function = G.degree
+	return function
+
+
+def add_weights_WC(G):
+	"""
+	adds spread probabilities as edge weights to networkx graph under Weighted Cascade model
+	:param G: directed networkx graph
+	:return:
+	"""
+	if not G.is_directed():
+		G = G.to_directed()
+	my_degree_function = degree_function(G)
+	weighted_edges = []
+	for a in G.adjacency():
+		u, V = a
+		for v in V:
+			p = 1.0 / my_degree_function(v)
+			weighted_edges.append((u, v, p))
+	G_c = G.copy()
+	G_c.add_weighted_edges_from(weighted_edges)
+	return G_c
+
+
+# G = nx.generators.random_graphs.barabasi_albert_graph(5, 3, seed=0)
+# G_w = add_weights_WC(G)
+# print(dict(G_w.adjacency()))
+#
+# print(G_w[0][4]["weight"])
