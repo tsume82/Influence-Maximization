@@ -221,21 +221,6 @@ def ea_evaluator(candidates, args):
 	return fitness
 
 
-def ea_evaluator_threaded(A, fitness, index, thread_lock, spread_function, thread_id):
-	# TODO not sure that this is needed
-	A_set = set(A)
-
-	# run spread simulation
-	influence_mean, influence_std = spread_function(A=A_set)
-
-	# lock shared resource, write in it, release
-	thread_lock.acquire()
-	fitness[index] = influence_mean
-	thread_lock.release()
-
-	return
-
-
 def ea_evaluator_processed(args, spread_function):
 	A, random_seed = args
 	A = set(A)
@@ -243,7 +228,7 @@ def ea_evaluator_processed(args, spread_function):
 	if spread_function.func != two_hop:
 		influence_mean, influence_std = spread_function(A=A, random_generator=random.Random(random_seed))
 	else:
-		influence_mean, influence_std = spread_function(A=A)
+		influence_mean = spread_function(A=A)
 	return influence_mean
 
 

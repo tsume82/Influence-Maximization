@@ -15,8 +15,27 @@ def neighbours(G, s):
 	"""
 	return list(dict(G.adjacency())[s])
 
+def get_p(G, u, v, p, model):
+	"""
+	returns spread probability from u to v according to the model
+	:param G:
+	:param u:
+	:param v:
+	:param p:
+	:param model:
+	:return:
+	"""
+	if nx.is_directed(G):
+		my_degree_function = G.in_degree
+	else:
+		my_degree_function = G.degree
+	if model == "IC":
+		return p
+	elif model == "WC":
+		return 1.0/my_degree_function(v)
 
-def one_hop_spread_single_node(G, s):
+
+def one_hop_spread_single_node(G, s, p=None, model=None):
 	"""
 	:param G: netowrkx weighted directed graphs, where weights are spread probabilities
 	:param s: node label
@@ -25,12 +44,14 @@ def one_hop_spread_single_node(G, s):
 	result = 1
 	Cs = neighbours(G, s)
 	for c in Cs:
+		if "weight" not in G[s][c]:
+			G[s][c]["weight"] = get_p(G, s, c, p, model)
 		ps_c = G[s][c]["weight"]
 		result += ps_c
 	return result
 
 
-def _chi(G, S):
+def _chi(G, S, p=None, model=None):
 	"""
 	returns chi value of seed set S
 	:param G: netowrkx weighted directed graphs, where weights are spread probabilities
@@ -45,13 +66,17 @@ def _chi(G, S):
 			Cc = set(neighbours(G, c))
 			Cc = Cc.intersection(S).difference({s})
 			for d in Cc:
+				if "weight" not in G[s][c]:
+					G[s][c]["weight"] = get_p(G, s, c, p, model)
+				if "weight" not in G[c][d]:
+					G[c][d]["weight"] = get_p(G, c, d, p, model)
 				ps_c = G[s][c]["weight"]
 				pc_d = G[c][d]["weight"]
 				result += ps_c*pc_d
 	return result
 
 
-def two_hop_spread(G, A):
+def two_hop_spread(G, A, p=None, model=None):
 	"""
 	two hop spread of initial seed set S under IC or WC propagation models
 	:param G: networkx graph
@@ -62,23 +87,32 @@ def two_hop_spread(G, A):
 	S = A
 	k = len(S)
 	result = 0
-	result -= _chi(G, S)
+	result -= _chi(G, S, p, model)
 	if k == 1:
 		result += 1
 		s = list(S)[0]
 		Cs = set(neighbours(G, s))
 		for c in Cs:
-			sigma_c = one_hop_spread_single_node(G, c)
+			sigma_c = one_hop_spread_single_node(G, c, p, model)
+			if "weight" not in G[s][c]:
+				G[s][c]["weight"] = get_p(G, s, c, p, model)
+			if "weight" not in G[c][s]:
+				G[c][s]["weight"] = get_p(G, s, c, p, model)
 			ps_c = G[s][c]["weight"]
 			pc_s = G[c][s]["weight"]
+
 			result += ps_c*(sigma_c-pc_s)
 	else:
 		for s in S:
-			result += two_hop_spread(G, [s])
+			result += two_hop_spread(G, [s], p, model)
 			Cs = set(neighbours(G, s))
 			Cs = Cs.intersection(S)
 			for c in Cs:
-				sigma_c = one_hop_spread_single_node(G, c)
+				sigma_c = one_hop_spread_single_node(G, c, p, model)
+				if "weight" not in G[s][c]:
+					G[s][c]["weight"] = get_p(G, s, c, p, model)
+				if "weight" not in G[c][s]:
+					G[c][s]["weight"] = get_p(G, s, c, p, model)
 				ps_c = G[s][c]["weight"]
 				pc_s = G[c][s]["weight"]
 				result -= ps_c*(sigma_c-pc_s)
