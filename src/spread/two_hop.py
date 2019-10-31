@@ -96,11 +96,13 @@ def two_hop_spread(G, A, p=None, model=None):
 			sigma_c = one_hop_spread_single_node(G, c, p, model)
 			if "weight" not in G[s][c]:
 				G[s][c]["weight"] = get_p(G, s, c, p, model)
-			if "weight" not in G[c][s]:
-				G[c][s]["weight"] = get_p(G, s, c, p, model)
+			if s in G[c]:
+				if "weight" not in G[c][s]:
+					G[c][s]["weight"] = get_p(G, s, c, p, model)
+				pc_s = G[c][s]["weight"]
+			else:
+				pc_s = 0
 			ps_c = G[s][c]["weight"]
-			pc_s = G[c][s]["weight"]
-
 			result += ps_c*(sigma_c-pc_s)
 	else:
 		for s in S:
@@ -111,10 +113,13 @@ def two_hop_spread(G, A, p=None, model=None):
 				sigma_c = one_hop_spread_single_node(G, c, p, model)
 				if "weight" not in G[s][c]:
 					G[s][c]["weight"] = get_p(G, s, c, p, model)
-				if "weight" not in G[c][s]:
-					G[c][s]["weight"] = get_p(G, s, c, p, model)
+				if s in G[c]:
+					if "weight" not in G[c][s]:
+						G[c][s]["weight"] = get_p(G, s, c, p, model)
+					pc_s = G[c][s]["weight"]
+				else:
+					pc_s = 0
 				ps_c = G[s][c]["weight"]
-				pc_s = G[c][s]["weight"]
 				result -= ps_c*(sigma_c-pc_s)
 
 	return result
