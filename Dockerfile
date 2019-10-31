@@ -9,7 +9,7 @@ WORKDIR /Influence-Maximization/src
 
 COPY ./ /Influence-Maximization
 
-ENTRYPOINT python /Influence-Maximization/src/experiments.py --exp_dir=../experiments/smart_initialization_comparison
+ENTRYPOINT python /Influence-Maximization/src/experiments.py --exp_dir=../experiments/spread_functions_correlation
 #ENTRYPOINT rm -r /Influence-Maximization/experiments/smart_initialization_comparison/out
 
 # docker build . -t inf-max
