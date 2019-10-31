@@ -4,6 +4,7 @@ RUN mkdir -p /Influence-Maximization
 RUN pip3 install inspyred
 RUN pip3 install networkx
 RUN pip3 install numpy
+RUN pip3 install pandas
 
 WORKDIR /Influence-Maximization/src
 

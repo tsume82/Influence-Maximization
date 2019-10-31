@@ -1,0 +1,2 @@
+k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max
+5,0.4,100,2,IC,1000,2,barabasi_albert,0,None,0,100,../experiments/spread_functions_correlation/out/barabasi_albert/p/IC/0.4/seed_0_exp_in/repetition_0,0.26196939806626923,0.2660873308379395,6.927034361868366,602.89,639.23
