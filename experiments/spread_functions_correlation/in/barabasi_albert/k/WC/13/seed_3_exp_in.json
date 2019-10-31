@@ -1,0 +1,17 @@
+{
+    "script": "spread_computation.py",
+    "n_repetitions": 1,
+    "script_args": {
+        "k": 13,
+        "p": 0.2,
+        "n": 100,
+        "no_simulations": 100,
+        "max_hop": 2,
+        "random_seed": 3,
+        "g_nodes": 1000,
+        "g_new_edges": 2,
+        "g_type": "barabasi_albert",
+        "g_seed": 0,
+        "model": "WC"
+    }
+}

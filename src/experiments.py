@@ -39,7 +39,7 @@ def run_experiment(in_file, out_dir, hpc=False):
 	for i in range(data["n_repetitions"]):
 		print("-------------------------------")
 		print("Repetition {}".format(i))
-		# assumption: script function should have argument "out_dir"
+		# !! assumption: script function should have argument "out_dir"
 		out_dir_arg = out_dir
 		if "out_dir" not in data["script_args"].keys():
 			out_dir_arg += "/" + "repetition_{}".format(i)
