@@ -5,15 +5,16 @@ Ideally, it will eventually contain both the single-objective (maximize influenc
 amount of seed nodes) and multi-objective (maximize influence, minimize number of seed nodes) versions. 
 This relies upon the inspyred Python library for evolutionary algorithms."""
 
-
 # general libraries
 import inspyred
 import random
 from functools import partial
 import copy
+import numpy as np
 
 from time import time, strftime
-from utils import dict2csv
+
+from utils import add_weights_WC, add_weights_IC, dict2csv
 
 # local libraries
 
@@ -23,6 +24,41 @@ from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_
 from spread.two_hop import two_hop_spread as two_hop
 
 from smart_initialization import max_centrality_individual
+
+from load import read_graph
+
+
+def common_elements(lst1, lst2):
+	"""
+	returns number of unique elements in common between two lists
+	:param lst1:
+	:param lst2:
+	:return:
+	"""
+	return len(set(lst1).intersection(lst2))
+
+
+def diversity(population):
+	"""
+	reutrns diversity of a given population
+	:param population:
+	:return:
+	"""
+	indiv_mean_similarities = np.zeros(len(population))
+	j = 0
+	for individual in population:
+		ind_similarity = np.zeros(len(population) - 1)
+		i = 0
+		k = len(individual.candidate)
+		pop_copy = population.copy()
+		pop_copy.remove(individual)
+		for individual2 in pop_copy:
+			ind_similarity[i] = common_elements(individual.candidate, individual2.candidate) / k
+			i += 1
+		indiv_mean_similarities[j] = ind_similarity.mean()
+		j += 1
+
+	return 1 - indiv_mean_similarities.mean()
 
 
 def ea_observer(population, num_generations, num_evaluations, args):
@@ -37,9 +73,26 @@ def ea_observer(population, num_generations, num_evaluations, args):
 	# TODO write current state of the ALGORITHM to a file (e.g. random number generator, time elapsed, stuff like that)
 	# write current state of the population to a file
 	population_file = args["population_file"]
+	generations_file = args["generations_file"]
 
 	# find the longest individual
 	max_length = len(max(population, key=lambda x: len(x.candidate)).candidate)
+
+	# compute some generation statistics
+	generation_stats = {}
+	prev_best = args["prev_population_best"]
+	current_best = max(population).fitness
+	if prev_best > 0:
+		generation_stats["improvement"] = (current_best - prev_best)/prev_best
+	else:
+		generation_stats["improvement"] = 0
+	args["prev_population_best"] = current_best
+
+	with open(generations_file, "a") as fg:
+		fg.write("{},".format(num_generations))
+		fg.write("{},".format(diversity(population)))
+		fg.write("{},".format(generation_stats["improvement"]))
+		fg.write("{}\n".format(current_best))
 
 	with open(population_file, "w") as fp:
 		# header, of length equal to the maximum individual length in the population
@@ -63,6 +116,8 @@ def ea_observer(population, num_generations, num_evaluations, args):
 				fp.write(",")
 
 			fp.write("\n")
+
+	# diversity and % of improvement
 
 	return
 
@@ -100,7 +155,8 @@ def ea_alteration_mutation(random, candidate, args):
 
 def ea_influence_maximization(k, G, p, no_simulations, model, population_size=100, offspring_size=100,
 							  max_generations=100, n_parallel=1, random_generator=None, initial_population=None,
-							  population_file=None, spread_function=None, max_hop=None):
+							  population_file=None, spread_function=None, max_hop=None,
+							  generations_file=None):
 	# initialize a generic evolutionary algorithm
 	# logging.debug("Initializing Evolutionary Algorithm...")
 	if random_generator is None:
@@ -109,15 +165,18 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 	# check if some of the optional parameters are set; otherwise, use default values
 	nodes = list(G.nodes)
 
-
 	if spread_function is None or spread_function == "monte_carlo":
 		spread_function = partial(monte_carlo, no_simulations=no_simulations, p=p, model=model,
 								  G=G)
 	elif spread_function == "monte_carlo_max_hop":
 		spread_function = partial(monte_carlo_max_hop, no_simulations=no_simulations, p=p,
-								  model=model, G=G, max_hop = max_hop)
+								  model=model, G=G, max_hop=max_hop)
 	elif spread_function == "two_hop":
 		spread_function = partial(two_hop, G=G, p=p, model=model)
+
+	# initialize generations file
+	with open(generations_file, "w") as gf:
+		gf.write("num_genrations,diversity,improvement,best_fitness\n")
 
 	# instantiate a basic EvolutionaryComputation object, that is "empty" (no default methods defined for any component)
 	# so we will need to define every method
@@ -128,6 +187,7 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 	ea.selector = inspyred.ec.selectors.tournament_selection  # default size is 2
 	ea.replacer = inspyred.ec.replacers.plus_replacement
 
+	generations_stats = []
 	# start the evolutionary process
 	final_population = ea.evolve(
 		generator=ea_generator,
@@ -147,10 +207,11 @@ def ea_influence_maximization(k, G, p, no_simulations, model, population_size=10
 		nodes=nodes,
 		n_parallel=n_parallel,
 		population_file=population_file,
+		generations_file = generations_file,
 		time_previous_generation=time(),  # this will be updated in the observer
 		spread_function=spread_function,
 		random_generator=random_generator,
-
+		prev_population_best = -1,
 	)
 
 	best_individual = max(final_population)
@@ -175,7 +236,7 @@ def ea_generator(random, args):
 	return individual
 
 
-@inspyred.ec.variators.crossover  
+@inspyred.ec.variators.crossover
 # decorator that defines the operator as a crossover, even if it isn't in this case :-)
 def ea_super_operator(random, candidate1, candidate2, args):
 	k = args["k"]
@@ -252,9 +313,10 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Evolutionary algorithm computation')
 
-	parser.add_argument('--k', type=int, default=5, help='seed set size')
+	parser.add_argument('--k', type=int, default=10, help='seed set size')
 	parser.add_argument('--p', type=float, default=0.1, help='probability of influence spread in IC model')
-	parser.add_argument('--spread_function', default="monte_carlo", choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
+	parser.add_argument('--spread_function', default="monte_carlo",
+						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
 	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=2, help='number of max hops for monte carlo max hop function')
@@ -268,20 +330,27 @@ if __name__ == "__main__":
 	parser.add_argument('--n_parallel', type=int, default=4,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
-	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
+	parser.add_argument('--g_nodes', type=int, default=10000, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition'], help='graph type')
+	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition',
+																		'wiki', 'amazon',
+																		'twitter', 'facebook', 'CA-GrQc'],
+						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
 	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
 	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
+	parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
+																 'generation population')
 	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
-	parser.add_argument('--out_dir', default=None, help='location of the output directory in case if outfile is preferred'
-														'to have default name')
+	parser.add_argument('--out_dir', default=None,
+						help='location of the output directory in case if outfile is preferred'
+							 'to have default name')
 	parser.add_argument('--smart_initialization', default="", choices=["", "degree", "eigenvector", "katz", "closeness",
-							  "betweenness", "second_order"], help='if set, an individual containing best nodes according'
-																   'to the selected centrality metric will be inesrted'
-																   'into the initial population')
+																	   "betweenness", "second_order"],
+						help='if set, an individual containing best nodes according'
+							 'to the selected centrality metric will be inesrted'
+							 'into the initial population')
 
 	args = parser.parse_args()
 
@@ -289,7 +358,6 @@ if __name__ == "__main__":
 		import load
 
 		G = load.read_graph(args.g_file)
-	# G = load.read_graph("graphs/facebook_combined.txt")
 	else:
 		import networkx as nx
 
@@ -297,7 +365,21 @@ if __name__ == "__main__":
 			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
 		elif args.g_type == "gaussian_random_partition":
 			G = nx.gaussian_random_partition_graph(n=args.g_nodes, s=10, v=10, p_in=0.25, p_out=0.1, seed=args.g_seed)
-
+		elif args.g_type == "wiki":
+			G = read_graph("../graphs/wiki-Vote.txt", directed=True)
+			args.g_nodes = len(G.nodes())
+		elif args.g_type == "amazon":
+			G = read_graph("../graphs/amazon0302.txt", directed=True)
+			args.g_nodes = len(G.nodes())
+		elif args.g_type == "twitter":
+			G = read_graph("../graphs/twitter_combined.txt", directed=True)
+			args.g_nodes = len(G.nodes())
+		elif args.g_type == "facebook":
+			G = read_graph("../graphs/facebook_combined.txt", directed=False)
+			args.g_nodes = len(G.nodes())
+		elif args.g_type == "CA-GrQc":
+			G = read_graph("../graphs/CA-GrQc.txt", directed=True)
+			args.g_nodes = len(G.nodes())
 	# random generator
 	prng = random.Random()
 	if args.random_seed is None:
@@ -314,6 +396,7 @@ if __name__ == "__main__":
 	else:
 		out_dir = args.out_dir
 		import os
+
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
 
@@ -332,11 +415,19 @@ if __name__ == "__main__":
 	else:
 		log_file = args.log_file
 
+	if args.generations_file is None:
+		generations_file = out_dir + "/" + "generations_" + out_name
+	else:
+		generations_file = args.generations_file
+
 	# smart initialization
 	initial_population = None
 	if args.smart_initialization != "":
 		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
 		initial_population = [smart_individual]
+
+	print("Graph info")
+	print(nx.classes.function.info(G))
 
 	start = time()
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k, G=G, p=args.p, no_simulations=args.no_simulations,
@@ -346,7 +437,8 @@ if __name__ == "__main__":
 														   n_parallel=args.n_parallel, random_generator=prng,
 														   initial_population=initial_population,
 														   population_file=population_file,
-														   spread_function=args.spread_function, max_hop=args.max_hop)
+														   spread_function=args.spread_function, max_hop=args.max_hop,
+														   generations_file=generations_file)
 	exec_time = time() - start
 
 	print("Execution time: ", exec_time)
