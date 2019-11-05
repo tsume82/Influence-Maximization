@@ -14,12 +14,12 @@ from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
 if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Spread functions computation')
-	parser.add_argument('--k', type=int, default=10, help='seed set size')
+	parser.add_argument('--k', type=int, default=5, help='seed set size')
 	parser.add_argument('--p', type=float, default=0.2, help='probability of influence spread in IC model')
 	parser.add_argument('--n', type=int, default=100, help='number of seed set extractions')
 	parser.add_argument('--max_hop', type=int, default=2, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
-	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--g_nodes', type=int, default=1000, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=2, help='number of new edges in barabasi-albert graphs')
 	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'wiki', 'amazon',
@@ -63,19 +63,10 @@ if __name__ == "__main__":
 			seed_set.append(prng.randint(0, args.g_nodes-1))
 		seed_sets.append(seed_set)
 
-	print("adding weights..")
-	# add weights containing probability to the graph
-	if args.model == "IC":
-		G = add_weights_IC(G, args.p)
-	elif args.model == "WC":
-		G = add_weights_WC(G)
-
-	print("..done")
-
 	monte_carlo_mh = partial(monte_carlo_max_hop, G=G, p=args.p, max_hop=args.max_hop, random_generator=prng,
 							 no_simulations=args.no_simulations, model=args.model)
 	monte_carlo_ = partial(monte_carlo, G=G, random_generator=prng, p=args.p, no_simulations=args.no_simulations, model=args.model)
-	two_hop = partial(two_hop_spread, G=G)
+	two_hop = partial(two_hop_spread, G=G, model=args.model, p=args.p)
 
 	# output file
 	outfile_name = args.out_dir + "/" + "results.csv"
@@ -91,18 +82,26 @@ if __name__ == "__main__":
 
 	import time
 
-	for S in seed_sets:
+	# logging computation time
+	comp_time_mc = np.zeros(len(seed_sets))
+	comp_time_mh = np.zeros(len(seed_sets))
+	comp_time_th = np.zeros(len(seed_sets))
+
+	for i, S in enumerate(seed_sets):
 		f.write("\n")
 		A = G_nodes[S]
 		now = time.time()
 		mc, _ = monte_carlo_(A=A)
-		print("Monte carlo comp.time: {}".format(time.time()-now))
+		comp_time_mc[i] = time.time() - now
+		print("Monte carlo comp.time: {}".format(comp_time_mc[i]))
 		now = time.time()
 		mc_mh, _ = monte_carlo_mh(A=A)
-		print("Monte carlo max hop comp.time: {}".format(time.time()-now))
+		comp_time_mh[i] = time.time() - now
+		print("Monte carlo max hop comp.time: {}".format(comp_time_mh[i]))
 		now = time.time()
 		th = two_hop(A=A)
-		print("Two hop comp.time: {}".format(time.time()-now))
+		comp_time_th[i] = time.time() - now
+		print("Two hop comp.time: {}".format(comp_time_th[i]))
 		f.write(",".join(map(str, S)) + ",")
 		f.write(",".join(map(str, [mc, mc_mh, th])))
 
@@ -126,6 +125,12 @@ if __name__ == "__main__":
 	log_data["mc_std"] = std
 	log_data["mc_min"] = mc_min
 	log_data["mc_max"] = mc_max
+	log_data["exec_time_mc_mean"] = comp_time_mc.mean()
+	log_data["exec_time_mc_std"] = comp_time_mc.std()
+	log_data["exec_time_mh_mean"] = comp_time_mh.mean()
+	log_data["exec_time_mh_std"] = comp_time_mh.std()
+	log_data["exec_time_th_mean"] = comp_time_th.mean()
+	log_data["exec_time_th_std"] = comp_time_th.std()
 
 	logfile_name = args.out_dir + "/" + "log.csv"
 	dict2csv(log_data, logfile_name)
