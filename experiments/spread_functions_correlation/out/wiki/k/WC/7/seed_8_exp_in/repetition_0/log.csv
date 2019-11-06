@@ -1,0 +1,2 @@
+k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max,exec_time_mc_mean,exec_time_mc_std,exec_time_mh_mean,exec_time_mh_std,exec_time_th_mean,exec_time_th_std
+7,0.2,100,2,WC,7115,2,wiki,0,None,8,100,../experiments/spread_functions_correlation/out/wiki/k/WC/7/seed_8_exp_in/repetition_0,0.9924208408482764,0.98911198438988,6.551703613749956,7.1,50.65,0.03643161058425903,0.04257428841933859,0.025819416046142577,0.02969383762514341,0.2721911072731018,0.2977810833365792
