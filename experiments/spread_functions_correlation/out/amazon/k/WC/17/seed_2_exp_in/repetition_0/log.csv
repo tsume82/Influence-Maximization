@@ -1,0 +1,2 @@
+k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max,exec_time_mc_mean,exec_time_mc_std,exec_time_mh_mean,exec_time_mh_std,exec_time_th_mean,exec_time_th_std
+17,0.2,100,2,WC,262111,2,amazon,0,None,2,100,../experiments/spread_functions_correlation/out/amazon/k/WC/17/seed_2_exp_in/repetition_0,0.8906529087672239,0.8919248014979538,7.06273175180679,51.68,87.27,0.046615796089172365,0.01208029002108974,0.02444369554519653,0.005971306145997652,15.913453543186188,2.2152055015176066
