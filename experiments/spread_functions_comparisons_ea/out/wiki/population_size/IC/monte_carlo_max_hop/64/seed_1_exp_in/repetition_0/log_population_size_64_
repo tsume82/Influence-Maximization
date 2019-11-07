@@ -1,0 +1,2 @@
+k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,generations_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
+5,0.3,monte_carlo_max_hop,100,2,IC,64,64,1,10,4,7115,3,wiki,0,None,None,None,None,population_size_64_,../experiments/spread_functions_comparisons_ea/out/wiki/population_size/IC/monte_carlo_max_hop/64/seed_1_exp_in/repetition_0,,44.83701992034912,1425.71,2136.85
