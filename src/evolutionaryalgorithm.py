@@ -333,7 +333,7 @@ if __name__ == "__main__":
 	parser.add_argument('--g_nodes', type=int, default=10000, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
 	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition',
-																		'wiki', 'amazon',
+																		'wiki', 'amazon', 'epinions',
 																		'twitter', 'facebook', 'CA-GrQc'],
 						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
@@ -379,6 +379,8 @@ if __name__ == "__main__":
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "CA-GrQc":
 			G = read_graph("../graphs/CA-GrQc.txt", directed=True)
+		elif args.g_type == "epinions":
+			G = read_graph("../graphs/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 	# random generator
 	prng = random.Random()

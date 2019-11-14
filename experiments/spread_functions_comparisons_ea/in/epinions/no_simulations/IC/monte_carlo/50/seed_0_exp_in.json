@@ -1,0 +1,22 @@
+{
+    "script": "evolutionaryalgorithm.py",
+    "n_repetitions": 1,
+    "script_args": {
+        "k": 5,
+        "p": 0.3,
+        "no_simulations": 50,
+        "max_hop": 2,
+        "population_size": 16,
+        "offspring_size": 16,
+        "random_seed": 0,
+        "max_generations": 10,
+        "n_parallel": 4,
+        "g_nodes": 1000,
+        "g_new_edges": 3,
+        "g_type": "epinions",
+        "g_seed": 0,
+        "spread_function": "monte_carlo",
+        "model": "IC",
+        "out_name": "no_simulations_50_"
+    }
+}
