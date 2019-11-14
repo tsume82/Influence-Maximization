@@ -22,7 +22,7 @@ if __name__ == "__main__":
 	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--g_nodes', type=int, default=1000, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=2, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'wiki', 'amazon',
+	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'wiki', 'amazon', 'epinions',
 																		'twitter', 'facebook', 'CA-GrQc'], help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
@@ -52,6 +52,9 @@ if __name__ == "__main__":
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "CA-GrQc":
 			G = read_graph("../graphs/CA-GrQc.txt", directed=True)
+			args.g_nodes = len(G.nodes())
+		elif args.g_type == "epinions":
+			G = read_graph("../graphs/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 	# extract n seed sets
 
