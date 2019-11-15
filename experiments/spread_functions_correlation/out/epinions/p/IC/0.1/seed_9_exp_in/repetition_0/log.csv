@@ -1,0 +1,2 @@
+k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max,exec_time_mc_mean,exec_time_mc_std,exec_time_mh_mean,exec_time_mh_std,exec_time_th_mean,exec_time_th_std
+5,0.1,100,2,IC,75879,2,epinions,0,None,9,100,../experiments/spread_functions_correlation/out/epinions/p/IC/0.1/seed_9_exp_in/repetition_0,0.7019762910572362,0.7075061821387281,3143.6029335379226,1349.43,10339.39,4.778103251457214,2.1929566652898504,0.007837281227111817,0.008700265431243142,0.8486583876609802,0.768426614376215
