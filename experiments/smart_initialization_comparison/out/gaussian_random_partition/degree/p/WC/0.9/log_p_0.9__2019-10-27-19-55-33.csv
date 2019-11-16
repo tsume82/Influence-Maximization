@@ -1,2 +1,0 @@
-k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
-5,0.9,two_hop,100,2,WC,64,64,0,15,4,1000,3,gaussian_random_partition,0,None,None,None,p_0.9_,../experiments/smart_initialization_comparison/out/gaussian_random_partition/degree/p/WC/0.9,degree,34.407503604888916,17.248824227017067,85.02

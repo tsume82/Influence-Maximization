@@ -1,0 +1,23 @@
+{
+    "script": "evolutionaryalgorithm.py",
+    "n_repetitions": 1,
+    "script_args": {
+        "k": 10,
+        "p": 0.1,
+        "spread_function": "monte_carlo_max_hop",
+        "no_simulations": 100,
+        "max_hop": 2,
+        "population_size": 16,
+        "offspring_size": 16,
+        "random_seed": 4,
+        "max_generations": 10,
+        "n_parallel": 4,
+        "g_nodes": 1000,
+        "g_new_edges": 3,
+        "g_type": "amazon",
+        "g_seed": 0,
+        "smart_initialization": "none",
+        "model": "WC",
+        "out_name": "k_10_"
+    }
+}

@@ -346,7 +346,7 @@ if __name__ == "__main__":
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="", choices=["", "degree", "eigenvector", "katz", "closeness",
+	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz", "closeness",
 																	   "betweenness", "second_order"],
 						help='if set, an individual containing best nodes according'
 							 'to the selected centrality metric will be inesrted'
@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
 	# smart initialization
 	initial_population = None
-	if args.smart_initialization != "":
+	if args.smart_initialization != "none":
 		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
 		initial_population = [smart_individual]
 
