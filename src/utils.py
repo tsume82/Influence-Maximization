@@ -1,5 +1,6 @@
 import collections
 import networkx as nx
+import os
 
 
 def args2cmd(args, exec_name, hpc=False):
@@ -113,6 +114,26 @@ def add_weights_WC(G):
 	G_c = G.copy()
 	G_c.add_weighted_edges_from(weighted_edges)
 	return G_c
+
+
+def get_path_level(dir, subdir):
+	level = subdir.replace(dir, "").count("/")
+	return level
+
+
+def traverse_level(dir, level):
+	"""
+	collects all directories paths and filenames of a certain level with respect to the input dir
+	:param dir:
+	:param level:
+	:return:
+	"""
+	out = []
+	for sub_dir_path, sub_dir_rel_path, files in os.walk(dir):
+		lev = get_path_level(dir, sub_dir_path)
+		if lev == level:
+			out.append([sub_dir_path, sub_dir_rel_path, files])
+	return out
 
 
 # G = nx.generators.random_graphs.barabasi_albert_graph(5, 3, seed=0)

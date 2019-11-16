@@ -6,26 +6,7 @@ import matplotlib.pyplot as plt
 import os
 import pandas as pd
 import shutil
-
-
-def get_path_level(dir, subdir):
-	level = subdir.replace(dir, "").count("/")
-	return level
-
-
-def traverse_level(dir, level):
-	"""
-	collects all directories paths and filenames of a certain level with respect to the input dir
-	:param dir:
-	:param level:
-	:return:
-	"""
-	out = []
-	for sub_dir_path, sub_dir_rel_path, files in os.walk(dir):
-		lev = get_path_level(dir, sub_dir_path)
-		if lev == level:
-			out.append([sub_dir_path, sub_dir_rel_path, files])
-	return out
+from utils import traverse_level
 
 
 def invert_levels(dir, level1, level2):
@@ -59,7 +40,7 @@ def invert_levels(dir, level1, level2):
 				shutil.rmtree(dir2)
 
 
-def collect_results(out_dir, csv_prefix=""):
+def collect_results(out_dir, csv_prefix="", generations_stats=False):
 	"""
 	merges all csv files in all subdirectories of out_dir recursively in unique pandas
 	dataframe
@@ -70,12 +51,27 @@ def collect_results(out_dir, csv_prefix=""):
 	all_files = []
 	for sub_dir_path, sub_dir_rel_path, files in os.walk(out_dir):
 		for f in files:
-			if (csv_prefix in f and ".csv" in f):
+			if (csv_prefix in f): #and ".csv" in f):
 				all_files.append(sub_dir_path + "/" + f)
 	li = []
 
 	for filename in all_files:
+
 		df = pd.read_csv(filename, index_col=None, header=0)
+		if generations_stats:
+			path = filename.replace(filename.split("/")[-1], "")
+			path_files = os.listdir(path)
+			gen_file = None
+
+			for f in path_files:
+				if f.startswith("generations"):
+					gen_file = f
+			df_gen = pd.read_csv(path + gen_file, index_col=None, header=0)
+			diversity = df_gen["diversity"].mean()
+			improvement = df_gen["improvement"].mean()
+			df["diversity"] = diversity
+			df["improvement"] = improvement
+
 		li.append(df)
 
 	frame = pd.concat(li, axis=0, ignore_index=True)
@@ -95,32 +91,50 @@ def plt_subplot(df, subplot_row, subplot_col, rows, cols, var2plot, y, F=None, t
 	:param F:
 	:return:
 	"""
-	x = sorted(df[var2plot].unique())
-	if F is not None:
-		f = F[0]
-		V = F[1]
-	else:
-		f = None
-		V = [None]
-	for v in V:
-		ax = plt.subplot(rows, cols, subplot_row * cols + subplot_col)
-		ax.title.set_text(title)
-		if f is not None:
-			data2plot = df[df[f] == v]
-		else:
-			data2plot = df
+	# x = sorted(df[var2plot].unique())
+	if type(y) is dict:
+		y_label = list(y.keys())[0]
+		Y = list(y.values())[0]
+		print(y_label)
+		print(Y)
 
-		mean = data2plot.groupby(var2plot)[y].mean()[x].to_numpy()
-		std = data2plot.groupby(var2plot)[y].std()[x].to_numpy()
-		plt.plot(x, mean, label=v)
-		plt.fill_between(x, mean - std, mean + std, alpha=0.2)
-		plt.ylabel(y)
-		plt.xlabel(var2plot)
-		plt.legend(loc='best')
+	else:
+		Y = [y]
+		y_label = y
+
+	for y in Y:
+		if F is not None:
+			f = F[0]
+			V = F[1]
+		else:
+			f = None
+			V = [None]
+		for v in V:
+			ax = plt.subplot(rows, cols, subplot_row * cols + subplot_col)
+			ax.title.set_text(title)
+			if f is not None:
+				data2plot = df[df[f] == v]
+			else:
+				data2plot = df
+
+			x = sorted(data2plot[var2plot].unique())
+
+			mean = data2plot.groupby(var2plot)[y].mean()[x].to_numpy()
+			std = data2plot.groupby(var2plot)[y].std()[x].to_numpy()
+			if v is not None:
+				plt.plot(x, mean, label=v)
+			elif len(Y)>1:
+				plt.plot(x, mean, label=y)
+			else:
+				plt.plot(x, mean)
+			plt.fill_between(x, mean - std, mean + std, alpha=0.2)
+			plt.ylabel(y_label)
+			plt.xlabel(var2plot)
+			plt.legend(loc='best')
 
 
 def plot_dir(out_dir, levels_function=[], name="", subplot_row=None, rows=None, cols=None, csv_prefix="", sub_Y=[],
-			 F=None, x2plot=None, res_dir="."):
+			 F=None, x2plot=None, res_dir=".", generations_stats=False):
 	"""
 
 	:param out_dir:
@@ -142,10 +156,9 @@ def plot_dir(out_dir, levels_function=[], name="", subplot_row=None, rows=None, 
 		if "subplot" in level_function:
 			# plot as subplots all subdirectories
 			sub_dirs = traverse_level(out_dir, 1)
-			if name[0]=="_":
+			if name[0] == "_":
 				name = name[1:]
 			plt.suptitle(name, color='red', x=0.5, y=0.995)
-
 			# each row corresponds to a subdirectory
 			rows = len(sub_dirs)
 
@@ -168,7 +181,7 @@ def plot_dir(out_dir, levels_function=[], name="", subplot_row=None, rows=None, 
 
 	else:
 		# data to print
-		df = collect_results(out_dir, csv_prefix)
+		df = collect_results(out_dir, csv_prefix, generations_stats)
 		if subplot_row is not None:
 			cols = 1 if len(sub_Y) == 0 else len(sub_Y)
 			for j, y in enumerate(sub_Y):
