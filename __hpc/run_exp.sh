@@ -1,4 +1,7 @@
-rm exp_exec.sh.e*
-rm exp_exec.sh.o*
+rm *.sh.e*
+rm *.sh.o*
 
-qsub exp_exec.sh
+for file in $1/*
+do
+  qsub "$file"
+done
