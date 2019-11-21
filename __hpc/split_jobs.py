@@ -16,11 +16,10 @@ for lev_dir, _, _ in level_dirs:
 	sub_directories.append(lev_dir)
 
 
-
 n_cpus = 4
 mem = 32
-walltime = 6
-queue = "short"
+walltime = 24
+queue = "common"
 
 
 directory = in_dir.replace("..", "").replace("/", "_") + "_" + queue
@@ -28,6 +27,8 @@ if not os.path.exists(directory):
 	os.makedirs(directory)
 
 for sub_dir in sub_directories:
+	if "amazon" in sub_dir:
+		mem=64
 	shell_text = """#!/bin/bash
 
 #PBS -l select=1:ncpus={}:mem={}gb
