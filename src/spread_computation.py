@@ -135,5 +135,13 @@ if __name__ == "__main__":
 	log_data["exec_time_th_mean"] = comp_time_th.mean()
 	log_data["exec_time_th_std"] = comp_time_th.std()
 
+	# write average degree and standard deviation, max, min
+	degrees = np.array(list(dict(G.degree()).values()))
+	log_data["degree_mean"] = degrees.mean()
+	log_data["degree_std"] = degrees.std()
+	log_data["degree_min"] = degrees.min()
+	log_data["degree_max"] = degrees.max()
+	log_data["degree_median"] = np.median(degrees)
+
 	logfile_name = args.out_dir + "/" + "log.csv"
 	dict2csv(log_data, logfile_name)
