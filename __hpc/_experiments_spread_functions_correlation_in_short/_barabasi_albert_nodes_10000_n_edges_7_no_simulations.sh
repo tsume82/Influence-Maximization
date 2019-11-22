@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -l select=1:ncpus=4:mem=64gb
+#PBS -l select=1:ncpus=4:mem=32gb
 
 # set max execution time
 #PBS -l walltime=6:00:0
@@ -12,5 +12,5 @@ pip3 install inspyred
 pip3 install networkx
 pip3 install numpy
 cd Influence-Maximization/src/
-python3 experiments.py --exp_dir=../experiments/spread_functions_correlation/in/wiki/no_simulations --hpc=True
+python3 experiments.py --exp_dir=../experiments/spread_functions_correlation/in/barabasi_albert_nodes_10000_n_edges_7/no_simulations --hpc=True
 	

@@ -12,5 +12,5 @@ pip3 install inspyred
 pip3 install networkx
 pip3 install numpy
 cd Influence-Maximization/src/
-python3 experiments.py --exp_dir=../experiments/spread_functions_correlation/in/wiki/no_simulations --hpc=True
+python3 experiments.py --exp_dir=../experiments/spread_functions_correlation/in/barabasi_albert_nodes_10000_n_edges_5/k --hpc=True
 	
