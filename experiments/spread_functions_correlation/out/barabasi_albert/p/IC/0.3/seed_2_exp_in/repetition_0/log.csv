@@ -1,2 +1,2 @@
-k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max
-5,0.3,100,2,IC,1000,2,barabasi_albert,0,None,2,100,../experiments/spread_functions_correlation/out/barabasi_albert/p/IC/0.3/seed_2_exp_in/repetition_0,0.6418576419766009,0.6547471530444238,19.895172861574217,343.13,433.56
+k,p,n,max_hop,model,g_nodes,g_new_edges,g_type,g_seed,g_file,random_seed,no_simulations,out_dir,mc_th_corr,mc_mcmh_corr,mc_std,mc_min,mc_max,exec_time_mc_mean,exec_time_mc_std,exec_time_mh_mean,exec_time_mh_std,exec_time_th_mean,exec_time_th_std
+5,0.3,100,2,IC,1000,2,barabasi_albert,0,None,2,100,../experiments/spread_functions_correlation/out/barabasi_albert/p/IC/0.3/seed_2_exp_in/repetition_0,0.6624593587923306,0.6710485548609632,20.656298008944958,352.89,439.79,0.07018815755844116,0.003572195020644289,0.0032434701919555665,0.0011046352335793675,0.003580451011657715,0.0012304398728498096
