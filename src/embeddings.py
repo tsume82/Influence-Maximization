@@ -1,172 +1,42 @@
+import time
 import networkx as nx
-import community
-import numpy as np
+from node2vec import Node2Vec
 
-
-def max_centrality_individual(k, G, centrality_metric="degree"):
-	"""
-	returns k nodes with the highest centrality metric
-	:param k:
-	:param G: networkx graph
-	:param centrality_metric: centrality metric string, to be chosen from "degree", "eigenvector", "katz", "closeness",
-							  "betweenness", "second_order"
-	:return:
-	"""
-	if centrality_metric == "degree":
-		nodes_centrality = nx.degree_centrality(G)
-	elif centrality_metric == "eigenvector":
-		nodes_centrality = nx.eigenvector_centrality_numpy(G)
-	elif centrality_metric == "katz":
-		nodes_centrality = nx.katz_centrality_numpy(G)
-	elif centrality_metric == "closeness":
-		nodes_centrality = nx.closeness_centrality(G)
-	elif centrality_metric == "betweenness":
-		nodes_centrality = nx.betweenness_centrality(G)
-	elif centrality_metric == "second_order":
-		nodes_centrality = nx.second_order_centrality(G)
-
-	sorted_nodes_centrality = dict(sorted(nodes_centrality.items(), key=lambda nodes_centrality: nodes_centrality[1],
-										  reverse=True))
-	return list(sorted_nodes_centrality)[:k]
+from load import read_graph
 
 
 
+# FILES
+EMBEDDING_FILENAME = './embeddings.emb'
+EMBEDDING_MODEL_FILENAME = './embeddings.model'
 
-# def random_community_member(comm_part, i):
-# 	"""
-# 	returns random community member given the community partition and community number i
-# 	:param comm_part:
-# 	:param i:
-# 	:return:
-# 	"""
-# 	# check if community i exists
-# 	print (comm_part.values())
+# Create a graph
+# graph = nx.fast_gnp_random_graph(n=100, p=0.5)
+# G = read_graph("../graphs/amazon0302.txt", directed=True)
+# graph = read_graph("../graphs/wiki-Vote.txt", directed=True)
+graph = read_graph("../graphs/soc-Epinions1.txt", directed=True)
+start = time.time()
+# Precompute probabilities and generate walks
+node2vec = Node2Vec(graph, dimensions=64, walk_length=30, num_walks=200, workers=4)
 
+## if d_graph is big enough to fit in the memory, pass temp_folder which has enough disk space
+# Note: It will trigger "sharedmem" in Parallel, which will be slow on smaller graphs
+#node2vec = Node2Vec(graph, dimensions=64, walk_length=30, num_walks=200, workers=4, temp_folder="/mnt/tmp_data")
 
-class Community_initialization:
-	def __init__(self, G, random_seed=None):
-		self.G = G.to_undirected()
-		self.prng = np.random.RandomState(random_seed)
-		self.comm_part = community.best_partition(self.G, random_state=self.prng)
-		comm_idxs = set(self.comm_part.values())
-		# dictionary containing community indexes as keys and graph labels as values
-		self.communities = dict()
-		for comm_idx in comm_idxs:
-			self.communities[comm_idx] = np.array([k for k, v in self.comm_part.items() if v == comm_idx])
+# Embed
+model = node2vec.fit(window=10, min_count=1, batch_words=4)  # Any keywords acceptable by gensim.Word2Vec can be passed, `diemnsions` and `workers` are automatically passed (from the Node2Vec constructor)
 
-		self.degree=None
+exec_time = time.time() - start
+print("exec time {}".format(exec_time))
+# Look for most similar nodes
+model.wv.most_similar('2')  # Output node names are always strings
 
-	def sample_min_repetitions(self, max, n):
-		"""
-		samples n numbers from range by repeating a minimum number of times
-		:param max:
-		:param probabilities:
-		:param n:
-		:return:
-		"""
+# Save embeddings for later use
+model.wv.save_word2vec_format(EMBEDDING_FILENAME)
 
-		chunks = int(n/max)
-		result = []
-		a = np.arange(max)
-		for _ in range(chunks):
-			self.prng.shuffle(a)
-			result.append(list(a.copy()))
-		# resulting chunk
-		diff = n - chunks*max
-		self.prng.shuffle(a)
-		result.append(list(a.copy()[:diff]))
-		result = [item for sublist in result for item in sublist]
-		return result
+# Save model for later use
+model.save(EMBEDDING_MODEL_FILENAME)
 
-	def get_random_members(self, comm_idx, n):
-		"""
-		get n random members from the community having comm_idx as index
-		:param comm_idx:
-		:param n:
-		:return:
-		"""
-		return self.prng.choice(self.communities[comm_idx], n)
-
-	def _get_random_degree_node(self, nodes, n):
-		"""
-		returns n randomly selected nodes from the given nodes, a probability of a node to be chosen is proportional
-		to its degree
-		:param nodes:
-		:return:
-		"""
-		if self.degree is None:
-			self.degree = nx.degree_centrality(self.G)
-		nodes_degrees = np.array([self.degree[node] for node in nodes])
-
-		probabilities = nodes_degrees / sum(nodes_degrees)
-		best_degree_nodes = self.prng.choice(nodes, n, p=probabilities)
-		return best_degree_nodes
-
-	def get_comm_members_random(self, n, k, degree=False):
-		"""
-		returns n members randomly chosen from communities, the probability to be taken
-		from a community is proportional to its size
-		:param n:
-		:param degree: if true, for each randomly selected community the probability to select a node is
-		proportional to its degree
-		:return:
-		"""
-		probabilites = np.zeros(len(self.communities.keys()))
-		tot_len = 0
-		for i in self.communities:
-			len_comm = len(self.communities[i])
-			tot_len += len_comm
-			probabilites[i] = len_comm
-
-		probabilites /= tot_len
-		result = []
-		max = len(self.communities.keys())
-		for i in range(n):
-			indiv = []
-			while len(indiv) < k:
-				comm_idx = self.prng.choice(max, k, p=probabilites)
-				# comm_idx = self.sample_min_repetitions(max, k)
-				for idx in comm_idx:
-					if degree:
-						comm_random_indiv = self._get_random_degree_node(self.communities[idx], 1)[0]
-					else:
-						comm_random_indiv = self.prng.choice(self.communities[idx])
-					if comm_random_indiv not in indiv and len(indiv) < k:
-						indiv.append(comm_random_indiv)
-			result.append(indiv)
-		return result
-
-	def get_comm_members_degree(self, probabilistic=False):
-		"""
-		returns one member for each community with the highest degree centrality
-		:probabilistic: if true returns for each community an individual with probability to be chosen
-		correspondent to its degree
-		:return:
-		"""
-		if self.degree is None:
-			self.degree = nx.degree_centrality(self.G)
-		best_degree_indivs = []
-		for k in self.communities:
-			comm_nodes = self.communities[k]
-			comm_nodes_degrees = np.array([self.degree[comm_node] for comm_node in comm_nodes])
-			if probabilistic:
-				best_comm_node = self._get_random_degree_node(comm_nodes, 1)[0]
-			else:
-				best_comm_node = comm_nodes[comm_nodes_degrees.argmax()]
-			best_degree_indivs.append(best_comm_node)
-
-		return best_degree_indivs
-
-
-if __name__ == "__main__":
-	G = nx.generators.barabasi_albert_graph(100, 2, 0)
-	S = max_centrality_individual(4, G, "second_order")
-	# print(S)
-	C_i = Community_initialization(G, 2)
-	inds = C_i.get_comm_members_random(4, 5, degree=False)
-	print(inds)
-
-	# print(C_i.sample_min_repetitions(4, 10))
-	# print(C_i.get_random_members(2, 3))
-	# print(C_i.get_comm_members_degree(probabilistic=True))
+with open("./log", "w") as f:
+	f.write("Running time: {}".format(exec_time))
 
