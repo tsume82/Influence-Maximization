@@ -1,2 +1,0 @@
-k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,out_name,out_dir,exec_time,best_fitness,best_mc_spread
-5,0.3,two_hop,500,2,WC,16,16,4,10,4,1000,3,barabasi_albert,0,None,None,None,no_simulations_500_,../experiments/spread_functions_comparisons/out/barabasi_albert/no_simulations/WC/two_hop/500,1.066575050354004,44.48989882376442,94.754

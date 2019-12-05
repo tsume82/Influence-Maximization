@@ -1,2 +1,0 @@
-k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,generations_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
-5,0.5,monte_carlo_max_hop,100,2,IC,16,16,4,10,4,7115,3,wiki,0,None,None,None,None,p_0.5_,../experiments/smart_initialization_comparison/out/wiki/p/IC/degree/0.5/seed_4_exp_in/repetition_0,degree,29.67020606994629,2165.37,2242.78

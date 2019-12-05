@@ -1,2 +1,0 @@
-k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,generations_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
-5,0.3,two_hop,100,2,IC,16,16,1,20,4,75879,3,epinions,0,None,None,None,None,max_generations_20_,../experiments/spread_functions_comparisons_ea/out/epinions/max_generations/IC/two_hop/20/seed_1_exp_in/repetition_0,,335.21120595932007,2427.9800000000027,22535.35
