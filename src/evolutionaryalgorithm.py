@@ -23,7 +23,7 @@ from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
 from spread.two_hop import two_hop_spread as two_hop
 
-from smart_initialization import max_centrality_individual
+from smart_initialization import max_centrality_individual, Community_initialization
 
 from load import read_graph
 
@@ -313,7 +313,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Evolutionary algorithm computation')
 
-	parser.add_argument('--k', type=int, default=10, help='seed set size')
+	parser.add_argument('--k', type=int, default=5, help='seed set size')
 	parser.add_argument('--p', type=float, default=0.1, help='probability of influence spread in IC model')
 	parser.add_argument('--spread_function', default="monte_carlo",
 						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
@@ -321,8 +321,8 @@ if __name__ == "__main__":
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=2, help='number of max hops for monte carlo max hop function')
 	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
-	parser.add_argument('--population_size', type=int, default=16, help='population size of the ea')
-	parser.add_argument('--offspring_size', type=int, default=16, help='offspring size of the ea')
+	parser.add_argument('--population_size', type=int, default=32, help='population size of the ea')
+	parser.add_argument('--offspring_size', type=int, default=32, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=44, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
@@ -346,11 +346,12 @@ if __name__ == "__main__":
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz", "closeness",
-																	   "betweenness", "second_order"],
+	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
+							"closeness", "betweenness", "second_order", "community", "community_degree"],
 						help='if set, an individual containing best nodes according'
 							 'to the selected centrality metric will be inesrted'
 							 'into the initial population')
+	parser.add_argument('--smart_initialization_percentage', default=0.1, help='percentage of "smart" initial population')
 
 	args = parser.parse_args()
 
@@ -366,21 +367,21 @@ if __name__ == "__main__":
 		elif args.g_type == "gaussian_random_partition":
 			G = nx.gaussian_random_partition_graph(n=args.g_nodes, s=10, v=10, p_in=0.25, p_out=0.1, seed=args.g_seed)
 		elif args.g_type == "wiki":
-			G = read_graph("../graphs/wiki-Vote.txt", directed=True)
+			G = read_graph("../experiments/datasets/wiki-Vote.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "amazon":
-			G = read_graph("../graphs/amazon0302.txt", directed=True)
+			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "twitter":
-			G = read_graph("../graphs/twitter_combined.txt", directed=True)
+			G = read_graph("../experiments/datasets/twitter_combined.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "facebook":
-			G = read_graph("../graphs/facebook_combined.txt", directed=False)
+			G = read_graph("../experiments/datasets/facebook_combined.txt", directed=False)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "CA-GrQc":
-			G = read_graph("../graphs/CA-GrQc.txt", directed=True)
+			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
 		elif args.g_type == "epinions":
-			G = read_graph("../graphs/soc-Epinions1.txt", directed=True)
+			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 	# random generator
 	prng = random.Random()
@@ -424,9 +425,19 @@ if __name__ == "__main__":
 
 	# smart initialization
 	initial_population = None
-	if args.smart_initialization != "none":
+	if "community" == args.smart_initialization:
+		comm_init = Community_initialization(G, random_seed=args.random_seed)
+		initial_population = \
+			comm_init.get_comm_members_random(int(args.population_size*args.smart_initialization_percentage),k=args.k, degree=False)
+	elif "community_degree" == args.smart_initialization:
+		comm_init = Community_initialization(G, random_seed=args.random_seed)
+		initial_population = \
+			comm_init.get_comm_members_random(int(args.population_size*args.smart_initialization_percentage), k=args.k, degree=True)
+	elif args.smart_initialization != "none":
 		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
 		initial_population = [smart_individual]
+
+	print(initial_population)
 
 	print("Graph info")
 	print(nx.classes.function.info(G))

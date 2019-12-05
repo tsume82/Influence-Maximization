@@ -39,22 +39,22 @@ if __name__ == "__main__":
 		if args.g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
 		elif args.g_type == "wiki":
-			G = read_graph("../graphs/wiki-Vote.txt", directed=True)
+			G = read_graph("../experiments/datasets/wiki-Vote.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "amazon":
-			G = read_graph("../graphs/amazon0302.txt", directed=True)
+			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "twitter":
-			G = read_graph("../graphs/twitter_combined.txt", directed=True)
+			G = read_graph("../experiments/datasets/twitter_combined.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "facebook":
-			G = read_graph("../graphs/facebook_combined.txt", directed=False)
+			G = read_graph("../experiments/datasets/facebook_combined.txt", directed=False)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "CA-GrQc":
-			G = read_graph("../graphs/CA-GrQc.txt", directed=True)
+			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "epinions":
-			G = read_graph("../graphs/soc-Epinions1.txt", directed=True)
+			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
 	# extract n seed sets
 
