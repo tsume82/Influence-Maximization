@@ -1,0 +1,2 @@
+k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,generations_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
+5,0.1,monte_carlo,1000,2,IC,16,16,3,10,4,262111,3,amazon,0,None,None,None,None,no_simulations_1000_,../experiments/spread_functions_comparisons_ea/out/amazon/no_simulations/IC/monte_carlo/1000/seed_3_p_0.1_exp_in/repetition_0,none,268.8943350315094,9.465,9.242

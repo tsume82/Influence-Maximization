@@ -1,0 +1,2 @@
+k,p,spread_function,no_simulations,max_hop,model,population_size,offspring_size,random_seed,max_generations,n_parallel,g_nodes,g_new_edges,g_type,g_seed,g_file,out_file,log_file,generations_file,out_name,out_dir,smart_initialization,exec_time,best_fitness,best_mc_spread
+5,0.3,monte_carlo,100,2,IC,16,16,2,10,4,1000,3,barabasi_albert,0,None,None,None,None,k_5_,../experiments/spread_functions_comparisons_ea/out/barabasi_albert/k/IC/monte_carlo/5/seed_2_exp_in/repetition_0,,5.829950571060181,697.82,679.87
