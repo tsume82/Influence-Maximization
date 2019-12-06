@@ -351,7 +351,7 @@ if __name__ == "__main__":
 						help='if set, an individual containing best nodes according'
 							 'to the selected centrality metric will be inesrted'
 							 'into the initial population')
-	parser.add_argument('--smart_initialization_percentage', default=0.1, help='percentage of "smart" initial population')
+	parser.add_argument('--smart_initialization_percentage', type=float, default=0.1, help='percentage of "smart" initial population')
 
 	args = parser.parse_args()
 
