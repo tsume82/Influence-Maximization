@@ -347,10 +347,15 @@ if __name__ == "__main__":
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
 	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
-							"closeness", "betweenness", "second_order", "community", "community_degree"],
+							"closeness", "betweenness", "second_order", "community", "community_degree", "community_degree_spectral"],
 						help='if set, an individual containing best nodes according'
 							 'to the selected centrality metric will be inesrted'
 							 'into the initial population')
+	parser.add_argument('--community_detection_algorithm', default="louvain", choices=["louvain", "spectral_clustering"],
+						help='algorithm to be used for community detection')
+	parser.add_argument('--n_clusters', type=int, default=5, help="useful only for smart initialization with spectral clustring, "
+																  "the scale number of clusters to be used, the actual number of clusters"
+																  " will become equal to k*n_clusters")
 	parser.add_argument('--smart_initialization_percentage', type=float, default=0.1, help='percentage of "smart" initial population')
 
 	args = parser.parse_args()
@@ -426,16 +431,28 @@ if __name__ == "__main__":
 	# smart initialization
 	initial_population = None
 	if "community" == args.smart_initialization:
-		comm_init = Community_initialization(G, random_seed=args.random_seed)
+		# set for now number of clusters equal to the dimension of seed set
+		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
+											 n_clusters=args.k*args.n_clusters)
 		initial_population = \
 			comm_init.get_comm_members_random(int(args.population_size*args.smart_initialization_percentage),k=args.k, degree=False)
 	elif "community_degree" == args.smart_initialization:
-		comm_init = Community_initialization(G, random_seed=args.random_seed)
+		# set for now number of clusters equal to the dimension of seed set
+		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
+											 n_clusters=args.k*args.n_clusters)
 		initial_population = \
 			comm_init.get_comm_members_random(int(args.population_size*args.smart_initialization_percentage), k=args.k, degree=True)
+	elif "commuity_degree_spectral" == args.smart_initialization:
+		args.community_detection_algorithm = "spectral_clustering"
+		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
+											 n_clusters=args.k * args.n_clusters)
+		initial_population = \
+			comm_init.get_comm_members_random(int(args.population_size * args.smart_initialization_percentage),
+											  k=args.k, degree=True)
 	elif args.smart_initialization != "none":
 		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
 		initial_population = [smart_individual]
+
 
 	print(initial_population)
 
