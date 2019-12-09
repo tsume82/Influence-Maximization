@@ -442,9 +442,8 @@ if __name__ == "__main__":
 											 n_clusters=args.k*args.n_clusters)
 		initial_population = \
 			comm_init.get_comm_members_random(int(args.population_size*args.smart_initialization_percentage), k=args.k, degree=True)
-	elif "commuity_degree_spectral" == args.smart_initialization:
-		args.community_detection_algorithm = "spectral_clustering"
-		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
+	elif "community_degree_spectral" == args.smart_initialization:
+		comm_init = Community_initialization(G, random_seed=args.random_seed, method="spectral_clustering",
 											 n_clusters=args.k * args.n_clusters)
 		initial_population = \
 			comm_init.get_comm_members_random(int(args.population_size * args.smart_initialization_percentage),
