@@ -385,6 +385,7 @@ if __name__ == "__main__":
 			args.g_nodes = len(G.nodes())
 		elif args.g_type == "CA-GrQc":
 			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
+			args.g_nodes = len(G.nodes())
 		elif args.g_type == "epinions":
 			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
@@ -451,9 +452,6 @@ if __name__ == "__main__":
 	elif args.smart_initialization != "none":
 		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
 		initial_population = [smart_individual]
-
-
-	print(initial_population)
 
 	print("Graph info")
 	print(nx.classes.function.info(G))
