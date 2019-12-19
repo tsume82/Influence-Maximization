@@ -31,6 +31,35 @@ def max_centrality_individual(k, G, centrality_metric="degree"):
 	return list(sorted_nodes_centrality)[:k]
 
 
+def degree_random(k, Graph, n, prng, ranked_probability=False, truncated=100):
+	"""
+	returns n individuals containing k nodes, chosen from graph with probabilities proportional to their degrees
+	"""
+	individuals = []
+	for _ in range(n):
+		new_indiv = []
+		G = Graph.copy()
+		for _ in range(k):
+			nodes_degree = nx.degree_centrality(G)
+			sorted_nodes_degree = dict(
+				sorted(nodes_degree.items(), key=lambda nodes_degree: nodes_degree[1],
+					   reverse=True))
+
+			nodes = list(sorted_nodes_degree.keys())[:truncated]
+			if ranked_probability:
+				probs = range(1, len(nodes)+1)
+			else:
+				probs = list(sorted_nodes_degree.values())
+			probs = np.array(probs[:truncated])
+			probs = probs / max(probs)
+			new_node = prng.choices(nodes, probs)[0]
+			new_indiv.append(new_node)
+			G.remove_node(new_node)
+		individuals.append(new_indiv)
+
+	return individuals
+
+
 class Community_initialization:
 	"""
 	class containing methods for smart initialization using community detection algorithms
@@ -149,10 +178,12 @@ if __name__ == "__main__":
 	# inds = C_i.get_comm_members_random(4, 5, degree=True)
 	# print(inds)
 
-	C_i = Community_initialization(G, 2, method="spectral_clustering", n_clusters=50)
-	inds = C_i.get_comm_members_random(4, 5, degree=True)
-	print(inds)
-
+	# C_i = Community_initialization(G, 2, method="spectral_clustering", n_clusters=50)
+	# inds = C_i.get_comm_members_random(4, 5, degree=True)
+	# print(inds)
+	import random
+	prng = random.Random(0)
+	print(degree_random(5, G, 10, prng))
 	# print(C_i.sample_min_repetitions(4, 10))
 	# print(C_i.get_random_members(2, 3))
 	# print(C_i.get_comm_members_degree(probabilistic=True))
