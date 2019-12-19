@@ -157,20 +157,20 @@ def generalized_degree_discount(k, G, p):
 	(It's too time-expensive to wait until all iterations are completed.)
 	Could change to a yield() instead of print().
 """
-def general_greedy(k, G, p, no_simulations, model):
+def general_greedy(k, G, p, no_simulations, model, prng):
 	S = []
 
 	for i in range(k):
 		maxinfl_i = (-1, -1)
 		v_i = -1
 		for v in list(set(G.nodes()) - set(S)):
-			eval_tuple = monte_carlo.MonteCarlo_simulation(G, S + [v], p, no_simulations, model)
+			eval_tuple = monte_carlo.MonteCarlo_simulation(G, S + [v], p, no_simulations, model, prng)
 			if eval_tuple[0] > maxinfl_i[0]:
 				maxinfl_i = (eval_tuple[0], eval_tuple[1])
 				v_i = v
 
 		S.append(v_i)
-		print(i+1, maxinfl_i[0], maxinfl_i[1], S)
+		# print(i+1, maxinfl_i[0], maxinfl_i[1], S)
 
 	return S
 
@@ -180,7 +180,7 @@ def general_greedy(k, G, p, no_simulations, model):
 
 	Also prints (not only returns) the 1..k nodes of supposedly max influence, and that influence.
 """
-def CELF(k, G, p, no_simulations, model):
+def CELF(k, G, p, no_simulations, model, prng):
 	A = []
 
 	max_delta = len(G.nodes()) + 1
@@ -204,12 +204,12 @@ def CELF(k, G, p, no_simulations, model):
 			if curr[s]:
 				A.append(s)
 				# the result for this seed set is:
-				res = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model)
-				print(len(A), res[0], res[1], A, sep=' ') # mean, stdev, A
+				res = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model, prng)
+				# print(len(A), res[0], res[1], A, sep=' ') # mean, stdev, A
 				break
 			else:
-				eval_after  = monte_carlo.MonteCarlo_simulation(G, A + [s], p, no_simulations, model)
-				eval_before = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model)
+				eval_after  = monte_carlo.MonteCarlo_simulation(G, A + [s], p, no_simulations, model, prng)
+				eval_before = monte_carlo.MonteCarlo_simulation(G, A, p, no_simulations, model, prng)
 				delta[s] = eval_after[0] - eval_before[0]
 				curr[s] = True
 
