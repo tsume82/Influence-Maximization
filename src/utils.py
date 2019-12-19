@@ -1,6 +1,9 @@
 import collections
 import networkx as nx
 import os
+import numpy as np
+
+from load import read_graph
 
 
 def args2cmd(args, exec_name, hpc=False):
@@ -135,6 +138,103 @@ def traverse_level(dir, level):
 			out.append([sub_dir_path, sub_dir_rel_path, files])
 	return out
 
+
+def find_files(out_dir, file_contains=".emb"):
+	"""
+	finds all files (their absolute locations) containing in their names file_contains in the out_dir recursively
+	returns list of files' paths
+	"""
+	all_files = []
+	for sub_dir_path, sub_dir_rel_path, files in os.walk(out_dir):
+		for f in files:
+			if (file_contains in f):
+				all_files.append(sub_dir_path + "/" + f)
+
+	return all_files
+
+
+def load_graph(g_file=None, g_type=None, g_nodes=None, g_new_edges=None, g_seed=None):
+	"""
+	loads the graph of type g_type, or creates a new one using g_nodes and g_new_edges info if the graph type is the
+	barabasi_albert model, if g_file is not none the graph contained in g_file is loaded
+	"""
+	if g_file is not None:
+		G = read_graph(g_file)
+	else:
+		if g_type == "barabasi_albert":
+			G = nx.generators.barabasi_albert_graph(g_nodes, g_new_edges, seed=g_seed)
+		elif g_type == "wiki":
+			G = read_graph("../experiments/datasets/wiki-Vote.txt", directed=True)
+		elif g_type == "amazon":
+			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
+		elif g_type == "twitter":
+			G = read_graph("../experiments/datasets/twitter_combined.txt", directed=True)
+		elif g_type == "facebook":
+			G = read_graph("../experiments/datasets/facebook_combined.txt", directed=False)
+		elif g_type == "CA-GrQc":
+			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
+		elif g_type == "epinions":
+			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
+
+	return G
+
+
+def random_nodes(G, n, prng):
+	"""
+	samples n random nodes from the graph G using prng as random generator
+	"""
+	graph_nodes = list(G.nodes)
+	if n > len(graph_nodes):
+		n = len(graph_nodes)
+	nodes = prng.sample(graph_nodes, n)
+	nodes = np.array(nodes)
+
+	return nodes
+
+
+def common_elements(lst1, lst2):
+	"""
+	returns number of unique elements in common between two lists
+	:param lst1:
+	:param lst2:
+	:return:
+	"""
+	return len(set(lst1).intersection(lst2))
+
+
+def diversity(population):
+	"""
+	reutrns the diversity of a given population
+	:param population:
+	:return:
+	"""
+
+	indiv_mean_similarities = np.zeros(len(population))
+	j = 0
+	for individual in population:
+		ind_similarity = np.zeros(len(population) - 1)
+		i = 0
+		k = len(individual.candidate)
+		pop_copy = population.copy()
+		pop_copy.remove(individual)
+		for individual2 in pop_copy:
+			ind_similarity[i] = common_elements(individual.candidate, individual2.candidate) / k
+			i += 1
+		indiv_mean_similarities[j] = ind_similarity.mean()
+		j += 1
+
+	return 1 - indiv_mean_similarities.mean()
+
+
+def individuals_diversity(population):
+	"""
+	percentage of different individuals in population
+	"""
+	pop = []
+	for individual in population:
+		pop.append(set(individual.candidate))
+
+	return len(set(tuple(row) for row in pop)) / len(pop)
 
 # G = nx.generators.random_graphs.barabasi_albert_graph(5, 3, seed=0)
 # G_w = add_weights_WC(G)
