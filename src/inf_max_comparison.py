@@ -47,9 +47,9 @@ if __name__=="__main__":
 
 	prng = random.Random(args.random_seed)
 
-	if args.heuristic in [general_greedy, CELF, generalized_degree_discount]:
+	if args.heuristic in ["general_greedy", "CELF", "generalized_degree_discount"]:
 		heuristic = partial(heuristic, p=args.p)
-		if args.heuristic in [general_greedy, CELF]:
+		if args.heuristic in ["general_greedy", "CELF"]:
 			heuristic = partial(heuristic, prng=prng, model=args.model, no_simulations=args.no_simulations)
 
 	start = time.time()
