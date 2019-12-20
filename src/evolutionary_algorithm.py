@@ -417,7 +417,7 @@ def ea_evaluator_processed(args, spread_function):
 def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, max_generations, prng,
 							  crossover_rate=0, mutation_rate=1, n_processes=16, initial_population=[],
 							  population_file=None, generations_file=None, tournament_size=2, num_elites=2,
-							  word2vec_file="wiki_embeddings_walk_length_80_.emb", min_degree=2,
+							  word2vec_file=None, min_degree=2,
 							  max_individual_copies=2, local_mutation_rate=0.5,
 							  local_mutation_operator=ea_local_neighbors_second_degree_mutation,
 							  global_mutation_operator=ea_gloabal_low_deg_mutation):
@@ -451,8 +451,10 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	# try another replacement operators you can find here : https://pythonhosted.org/inspyred/reference.html
 	# ea.replacer = inspyred.ec.replacers.plus_replacement
 	ea.replacer = ea_replacer
-
-	model = KeyedVectors.load_word2vec_format(word2vec_file, binary=False)
+	if word2vec_file is not None:
+		model = KeyedVectors.load_word2vec_format(word2vec_file, binary=False)
+	else:
+		model = None
 
 	final_population = ea.evolve(
 		generator=ea_generator,
