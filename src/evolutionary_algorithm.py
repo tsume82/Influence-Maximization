@@ -65,6 +65,8 @@ def ea_local_neighbors_random_mutation(prng, candidate, args):
 		if c in nodes: nodes.remove(c)
 	if len(nodes) > 0:
 		mutatedIndividual[gene] = nodes[prng.randint(0, len(nodes) - 1)]
+	else:
+		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
 
@@ -86,6 +88,8 @@ def ea_local_embeddings_mutation(prng, candidate, args):
 		if c in nodes: nodes.remove(c)
 	if len(nodes) > 0:
 		mutatedIndividual[gene] = nodes[prng.randint(0, len(nodes) - 1)]
+	else:
+		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
 
@@ -120,6 +124,8 @@ def ea_local_neighbors_second_degree_mutation(prng, candidate, args):
 		probs = np.array(second_degrees) / max(second_degrees)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
+	else:
+		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
 
@@ -157,6 +163,8 @@ def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 		probs = np.array(second_degrees) / max(second_degrees)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
+	else:
+		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
 
@@ -244,14 +252,15 @@ def ea_super_operator(prng, candidate1, candidate2, args):
 		c2_mutated = mutation(prng, list(candidate2), args)
 		if common_elements(c1_mutated, candidate1) < len(candidate1):
 			children.append(c1_mutated)
-		else:
-			print("wewe")
 
 		if common_elements(c2_mutated, candidate2) < len(candidate2) and common_elements(c2_mutated, c1_mutated) < len(
 				candidate2):
 			children.append(c2_mutated)
 		else:
-			print("wewe")
+			# second try
+			c2_mutated = mutation(prng, list(c2_mutated), args)
+			if common_elements(c2_mutated, c1_mutated) < len(candidate2):
+				children.append(c2_mutated)
 	# purge the children from "None" and arrays of the wrong size
 	l = len(children)
 	children = [c for c in children if c is not None and len(set(c)) == k]
@@ -313,12 +322,15 @@ def ea_observer1(population, num_generations, num_evaluations, args):
 	# print(args["_ec"])
 	div = diversity(population)
 	print("generation {}: diversity {}".format(num_generations, div))
+	# if adaptive, set local mutation rate to the nodes diversity
+	if args["adaptive_local_rate"]:
+		args["local_mutation_rate"] = div
 	ind_div = individuals_diversity(population)
 	print("generation {}: individuals diversity {}".format(num_generations, ind_div))
-	if ind_div < 0.5:
-		for ind in population:
-			print(ind)
-		exit(0)
+	# if ind_div < 0.5:
+	# 	for ind in population:
+	# 		print(ind)
+	# 	exit(0)
 	return
 
 
@@ -420,7 +432,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  word2vec_file=None, min_degree=2,
 							  max_individual_copies=2, local_mutation_rate=0.5,
 							  local_mutation_operator=ea_local_neighbors_second_degree_mutation,
-							  global_mutation_operator=ea_gloabal_low_deg_mutation):
+							  global_mutation_operator=ea_gloabal_low_deg_mutation,
+							  adaptive_local_rate=True):
 	# initialize generations file
 	with open(generations_file, "w") as gf:
 		gf.write("num_genrations,diversity,improvement,best_fitness\n")
@@ -481,7 +494,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 		max_individual_copies=max_individual_copies,
 		local_mutation_rate=local_mutation_rate,
 		local_mutation_operator=local_mutation_operator,
-		global_mutation_operator=global_mutation_operator
+		global_mutation_operator=global_mutation_operator,
+		adaptive_local_rate=adaptive_local_rate,
 	)
 
 	best_individual = max(final_population)
@@ -502,3 +516,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 #
 # print(max(means))
 # print(stds)
+
+# from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+# from utils import load_graph
+# G = load_graph(g_type="wiki")
+# print(monte_carlo(G, [5022, 2972, 312, 5079, 4310, 5524, 306, 1166, 1549, 8, 11, 457, 4632, 3976, 1542, 2565, 2658, 993, 6305, 1098], 0.1, 100, "WC"))
