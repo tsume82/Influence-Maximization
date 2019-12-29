@@ -8,9 +8,7 @@ import argparse
 import time
 
 from evolutionary_algorithm import ea_influence_maximization
-from evolutionary_algorithm import ea_local_embeddings_mutation, ea_local_neighbors_random_mutation, ea_local_neighbors_second_degree_mutation, \
-	ea_local_neighbors_second_degree_mutation_emb
-from evolutionary_algorithm import ea_gloabal_low_deg_mutation, ea_global_random_mutation
+import evolutionary_algorithm as ea
 
 from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
@@ -75,19 +73,19 @@ def read_arguments():
 	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=2, help='number of max hops for monte carlo max hop function')
-	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=16, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=16, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=43, help='seed to initialize the pseudo-random number '
 																	'generation')
-	parser.add_argument('--max_generations', type=int, default=30, help='maximum generations')
+	parser.add_argument('--max_generations', type=int, default=100, help='maximum generations')
 
-	parser.add_argument('--n_parallel', type=int, default=1,
+	parser.add_argument('--n_parallel', type=int, default=2,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='amazon', choices=['barabasi_albert', 'gaussian_random_partition',
+	parser.add_argument('--g_type', default='wiki', choices=['barabasi_albert', 'gaussian_random_partition',
 															 'wiki', 'amazon', 'epinions',
 															 'twitter', 'facebook', 'CA-GrQc'],
 						help='graph type')
@@ -101,7 +99,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="degree", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="community_degree", choices=["none", "degree", "eigenvector", "katz",
 																					"closeness", "betweenness", "second_order",
 																					"community", "community_degree",
 																					"community_degree_spectral", "degree_random",
@@ -119,24 +117,28 @@ def read_arguments():
 	parser.add_argument('--smart_initialization_percentage', type=float, default=1,
 						help='percentage of "smart" initial population')
 
-	parser.add_argument('--crossover_rate', type=float, default=0.1, help='evolutionary algorithm crossover rate')
+	parser.add_argument('--crossover_rate', type=float, default=0.3, help='evolutionary algorithm crossover rate')
 	parser.add_argument('--mutation_rate', type=float, default=1.0, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=2, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
-	parser.add_argument('--word2vec_file', type=str, default=None, help='evolutionary algorithm word2vec_file')
+	parser.add_argument('--word2vec_file', type=str, default="wiki_embeddings_walk_length_80_.emb", help='evolutionary algorithm word2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=2, help='max individual duplicates permitted in a population')
-	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
+	parser.add_argument('--min_degree', type=int, default=1, help='minimum degree for a node to be inserted into nodes pool in ea')
 	parser.add_argument('--local_search_rate', type=float, default=0.8, help='evolutionary algorithm local search probability, the global search is set'
 																			 'automatically to 1-local_search_rate')
 
-	func_type = type(ea_influence_maximization)
-	parser.add_argument('--local_mutation_operator', type=func_type, default=ea_local_neighbors_second_degree_mutation,
-						choices=[ea_local_neighbors_second_degree_mutation, ea_local_neighbors_second_degree_mutation_emb, ea_local_embeddings_mutation,
-								 ea_local_neighbors_random_mutation], help='local search mutation operator')
-	parser.add_argument('--global_mutation_operator', type=func_type, default=ea_gloabal_low_deg_mutation,
-						choices=[ea_gloabal_low_deg_mutation, ea_global_random_mutation], help='global search mutation operator')
+	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_second_degree_mutation',
+						choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
+								 "ea_local_neighbors_random_mutation"], help='local search mutation operator')
+	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_low_deg_mutation",
+						choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation"], help='global search mutation operator')
 
+	parser.add_argument('--adaptive_local_rate', type=bool, default=True, help='minimum degree for a node to be inserted into nodes pool in ea')
 	args = parser.parse_args()
+
+	# load mutation functions
+	args.local_mutation_operator = getattr(ea, args.local_mutation_operator)
+	args.global_mutation_operator = getattr(ea, args.global_mutation_operator)
 
 	return args
 
@@ -227,13 +229,15 @@ if __name__ == "__main__":
 														   max_individual_copies=args.max_individual_copies,
 														   local_mutation_rate=args.local_search_rate,
 														   local_mutation_operator=args.local_mutation_operator,
-														   global_mutation_operator=args.global_mutation_operator)
+														   global_mutation_operator=args.global_mutation_operator,
+														   adaptive_local_rate=args.adaptive_local_rate)
 	exec_time = time.time() - start
 	print("Execution time: ", exec_time)
 
 	print("Seed set: ", best_seed_set)
 	print("Spread: ", best_spread)
 
+	# best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
 	best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
 	print("Best monte carlo spread: ", best_mc_spread)
 
