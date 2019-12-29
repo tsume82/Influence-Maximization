@@ -40,7 +40,7 @@ def ea_global_random_mutation(prng, candidate, args):
 	nodes = args["nodes"].copy()
 	# avoid nodes repetitions
 	for c in candidate:
-		nodes.remove(c)
+		if c in nodes: nodes.remove(c)
 	mutatedIndividual = list(set(candidate))
 
 	# choose random place
@@ -111,22 +111,30 @@ def ea_local_neighbors_second_degree_mutation(prng, candidate, args):
 		if c in nodes: nodes.remove(c)
 
 	if len(nodes) > 0:
+		# TODO: bring outside this function, apply set() to the neighbors of neighbors
 		# calculate second degree of each of the neighbors
 		second_degrees = []
 		for node in nodes:
 			sec_degree = 0
+			# sec_degree_neighs = nodes
 			sec_degree += len(nodes)
 			node_neighs = list(args["G"].neighbors(node))
 			for node_neigh in node_neighs:
+				# print(node_neigh)
 				# !very roughly approximated, may include repetitions
-				sec_degree += len(list(args["G"].neighbors(node_neigh)))
+				neighbors_of_neighbors = list(args["G"].neighbors(node_neigh))
+				sec_degree += len(neighbors_of_neighbors)
+				# sec_degree_neighs.extend(neighbors_of_neighbors)
+				# for neigh in neighbors_of_neighbors:
+				# 	sec_degree_neighs.append(neigh)
+			# sec_degree_neighs = set(sec_degree_neighs)
+			# sec_degree = len(sec_degree_neighs)
 			second_degrees.append(sec_degree)
 		probs = np.array(second_degrees) / max(second_degrees)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
-
 	return mutatedIndividual
 
 
@@ -134,7 +142,7 @@ def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one of it's neighbors, but according to second degree probability
 	"""
-	# TODO calcolare le probabilità corrispondenti alla two hop spread del nodo, oppure alla somma di probabilità
+	#TODO calcolare le probabilità corrispondenti alla two hop spread del nodo, oppure alla somma di probabilità
 	# di propagazione al posto delle degrees
 	mutatedIndividual = list(set(candidate))
 
@@ -169,7 +177,7 @@ def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 	return mutatedIndividual
 
 
-def ea_gloabal_low_deg_mutation(prng, candidate, args):
+def ea_global_low_deg_mutation(prng, candidate, args):
 	"""
 	the probability to select the gene to mutate depends on its degree
 	"""
@@ -193,6 +201,28 @@ def ea_gloabal_low_deg_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 
+def ea_differential_evolution_mutation(prng, candidate, args):
+	"""
+	differential evolution mutation: x = x + (a - b)
+	"""
+	# pick two random individuals a and b
+
+	population = args["population"].copy()
+	population = [p.candidate for p in population]
+	if candidate in population: population.remove(candidate)
+
+	A = population[prng.randint(0, len(population)-1)]
+	population.remove(A)
+	B = population[prng.randint(0, len(population)-1)]
+
+	mutatedIndividual = []
+	for n, a, b in zip(candidate, A, B):
+		n1 = args["model"].most_similar(positive=[str(a), str(n)], negative=[str(b)], topn=1)[0][0]
+		n1 = int(n1)
+		mutatedIndividual.append(n1)
+
+	return mutatedIndividual
+
 # -------------------------------------- crossover operators ---------------------------------
 
 # 1-point crossover
@@ -208,18 +238,32 @@ def ea_one_point_crossover(prng, candidate1, candidate2, args):
 	if len(common) == len(candidate1):
 		return [candidate1]
 
-	# move common elements to the "beginning" of the list
+	candidate1_to_swap = candidate1.copy()
+	candidate2_to_swap = candidate2.copy()
+	c1_common = {}
+	c2_common = {}
+
+	# get the nodes of each candidate that can be swapped
 	for c in common:
-		candidate1.insert(0, candidate1.pop(candidate1.index(c)))
-		candidate2.insert(0, candidate2.pop(candidate2.index(c)))
+		candidate1_to_swap.pop(candidate1_to_swap.index(c))
+		candidate2_to_swap.pop(candidate2_to_swap.index(c))
+		idx1 = candidate1.index(c)
+		idx2 = candidate2.index(c)
+		c1_common[idx1] = c
+		c2_common[idx2] = c
 
-	# choose swap position, by avoiding common elements
-	swap_idx = prng.randint(len(common), len(candidate1) - 1)
-	swap = candidate1[swap_idx:]
-	candidate1[swap_idx:] = candidate2[swap_idx:]
-	candidate2[swap_idx:] = swap
+	# choose swap position
+	swap_idx = prng.randint(0, len(candidate1_to_swap) - 1)
+	swap = candidate1_to_swap[swap_idx:]
+	candidate1_to_swap[swap_idx:] = candidate2_to_swap[swap_idx:]
+	candidate2_to_swap[swap_idx:] = swap
 
-	return [candidate1, candidate2]
+	for (idx, c) in c1_common.items():
+		candidate1_to_swap.insert(idx, c)
+	for (idx, c) in c2_common.items():
+		candidate2_to_swap.insert(idx, c)
+
+	return [candidate1_to_swap, candidate2_to_swap]
 
 
 # -----------------------------------crossover & mutations combinations----------------------
@@ -250,6 +294,7 @@ def ea_super_operator(prng, candidate1, candidate2, args):
 			mutation = args["global_mutation_operator"]
 		c1_mutated = mutation(prng, list(candidate1), args)
 		c2_mutated = mutation(prng, list(candidate2), args)
+
 		if common_elements(c1_mutated, candidate1) < len(candidate1):
 			children.append(c1_mutated)
 
@@ -263,6 +308,14 @@ def ea_super_operator(prng, candidate1, candidate2, args):
 				children.append(c2_mutated)
 	# purge the children from "None" and arrays of the wrong size
 	l = len(children)
+	# children_n = []
+	# for c in children:
+	# 	if c is not None and len(set(c))==k:
+	# 		children_n.append(c)
+	# 	else:
+	# 		print(c)
+	# 		exit(0)
+	# children = children_n
 	children = [c for c in children if c is not None and len(set(c)) == k]
 	if l != len(children):
 		print("this message should not be printed")
@@ -278,6 +331,9 @@ def ea_replacer(random, population, parents, offspring, args):
 	"""
 	n = args["max_individual_copies"]
 	n_elites = args["num_elites"]
+
+	# print(len(offspring))
+	# exit(0)
 
 	# add elites from the old population
 	pool = list(population)
@@ -327,10 +383,10 @@ def ea_observer1(population, num_generations, num_evaluations, args):
 		args["local_mutation_rate"] = div
 	ind_div = individuals_diversity(population)
 	print("generation {}: individuals diversity {}".format(num_generations, ind_div))
-	# if ind_div < 0.5:
-	# 	for ind in population:
-	# 		print(ind)
-	# 	exit(0)
+
+	# save the current population in args
+	args["population"] = population
+
 	return
 
 
@@ -432,7 +488,7 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  word2vec_file=None, min_degree=2,
 							  max_individual_copies=2, local_mutation_rate=0.5,
 							  local_mutation_operator=ea_local_neighbors_second_degree_mutation,
-							  global_mutation_operator=ea_gloabal_low_deg_mutation,
+							  global_mutation_operator=ea_global_low_deg_mutation,
 							  adaptive_local_rate=True):
 	# initialize generations file
 	with open(generations_file, "w") as gf:
@@ -509,11 +565,11 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 # G = load_graph(g_type="wiki")
 # means = []
 # stds = []
-# for _ in range(1000):
-# 	m, s = monte_carlo(G, [1151, 766, 5524, 1166, 1549, 11, 457, 2565, 2688, 3028], 0.1, 100, "WC")
+# for _ in range(10):
+# 	m, s = monte_carlo(G, [2688, 2565, 457, 11, 1151, 1166, 766, 4967, 3642, 1549], 0.01, 100, "IC")
 # 	means.append(m)
 # 	stds.append(s)
-#
+# #
 # print(max(means))
 # print(stds)
 
