@@ -121,7 +121,7 @@ def read_arguments():
 	parser.add_argument('--mutation_rate', type=float, default=1.0, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=2, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
-	parser.add_argument('--word2vec_file', type=str, default="wiki_embeddings_walk_length_80_.emb", help='evolutionary algorithm word2vec_file')
+	parser.add_argument('--word2vec_file', type=str, default=None, help='evolutionary algorithm word2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=2, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=1, help='minimum degree for a node to be inserted into nodes pool in ea')
 	parser.add_argument('--local_search_rate', type=float, default=0.8, help='evolutionary algorithm local search probability, the global search is set'
