@@ -13,9 +13,14 @@ from gensim.models import KeyedVectors
 from ea.evolutionary_algorithm import ea_influence_maximization
 import ea.mutators as mutators
 
-from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
-from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-from spread.two_hop import two_hop_spread as two_hop
+# from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+# from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+# from spread.two_hop import two_hop_spread as two_hop
+
+
+from spread_pyx.monte_carlo import MonteCarlo_simulation as monte_carlo
+from spread_pyx.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from spread_pyx.two_hop import two_hop_spread as two_hop
 
 from smart_initialization import max_centrality_individual, Community_initialization, degree_random
 
