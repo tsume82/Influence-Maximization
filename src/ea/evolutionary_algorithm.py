@@ -28,7 +28,7 @@ def filter_nodes(G, min_degree):
 
 def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, max_generations, prng,
 							  crossover_rate=0, mutation_rate=1, n_processes=1, initial_population=[],
-							  population_file=None, generations_file=None, tournament_size=2, num_elites=2,
+							  individuals_file=None, statistics_file=None, tournament_size=2, num_elites=2,
 							  node2vec_model=None, min_degree=2,
 							  max_individual_copies=2, local_mutation_rate=0.5,
 							  local_mutation_operator=None,
@@ -39,7 +39,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	# observers: provide various logging features
 	ea.observer = [inspyred.ec.observers.stats_observer,
-					   inspyred.ec.observers.file_observer, ea_observer1, ea_observer2]
+					   inspyred.ec.observers.file_observer,
+				   ea_observer1, ea_observer2]
 
 	#  selection operator
 	ea.selector = inspyred.ec.selectors.tournament_selection
@@ -90,8 +91,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  seeds=initial_population,
 						  nodes=nodes,
 						  n_parallel=n_processes,
-						  population_file=population_file,
-						  generations_file=generations_file,
+						  individuals_file=individuals_file,
+						  statistics_file=statistics_file,
 						  prev_population_best=-1,
 						  local_mutation_operator=local_mutation_operator,
 						  global_mutation_operator=global_mutation_operator,
