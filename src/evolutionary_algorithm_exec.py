@@ -220,9 +220,15 @@ def initialize_node2vec_model(node2vec_file):
 
 
 def initialize_stats(generations_file):
-	print(generations_file)
-	with open(generations_file, "w") as gf:
-		gf.write("num_genrations,diversity,improvement,best_fitness\n")
+	gf = open(generations_file, "w+")
+	gf.write("generation number, pop_size, worst, best, median, avg, std, diversity, improvement\n")
+	return gf
+
+
+def initialize_inidividuls_file(individuals_file):
+	ind_f = open(individuals_file, "w")
+	ind_f.write("generation number, individual number, fitness, candidate\n")
+	return ind_f
 
 
 if __name__ == "__main__":
@@ -241,7 +247,8 @@ if __name__ == "__main__":
 
 	node2vec_model = initialize_node2vec_model(args.node2vec_file)
 
-	initialize_stats(generations_file)
+	generations_file = initialize_stats(generations_file)
+	individuals_file = initialize_inidividuls_file(population_file)
 
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k,
 														   G=G,
@@ -251,9 +258,9 @@ if __name__ == "__main__":
 														   n_processes=args.n_parallel,
 														   prng=prng,
 														   initial_population=initial_population,
-														   population_file=population_file,
+														   individuals_file=individuals_file,
 														   fitness_function=fitness_function,
-														   generations_file=generations_file,
+														   statistics_file=generations_file,
 														   crossover_rate=args.crossover_rate,
 														   mutation_rate=args.mutation_rate,
 														   tournament_size=args.tournament_size,
@@ -265,6 +272,9 @@ if __name__ == "__main__":
 														   local_mutation_operator=args.local_mutation_operator,
 														   global_mutation_operator=args.global_mutation_operator,
 														   adaptive_local_rate=args.adaptive_local_rate)
+
+	individuals_file.close()
+	generations_file.close()
 	exec_time = time.time() - start
 	print("Execution time: ", exec_time)
 
