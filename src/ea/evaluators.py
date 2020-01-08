@@ -46,6 +46,10 @@ def one_process_evaluator(candidates, args):
 	fitness = []
 	for candidate in candidates:
 		# fit = evaluate(args["G"], candidate, args["p"], args["no_simulations"], args["model"])
-		fit = args["fitness_function"](A=candidate, random_generator=args["prng"])[0]
+
+		if args["fitness_function"].func.__name__ != "two_hop_spread":
+			fit = args["fitness_function"](A=candidate, random_generator=args["prng"])[0]
+		else:
+			fit = args["fitness_function"](A=candidate)
 		fitness.append(fit)
 	return fitness
