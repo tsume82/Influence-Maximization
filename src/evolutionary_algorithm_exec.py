@@ -84,9 +84,9 @@ def read_arguments():
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=100, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=100, help='offspring size of the ea')
-	parser.add_argument('--random_seed', type=int, default=44, help='seed to initialize the pseudo-random number '
+	parser.add_argument('--random_seed', type=int, default=45, help='seed to initialize the pseudo-random number '
 																	'generation')
-	parser.add_argument('--max_generations', type=int, default=20, help='maximum generations')
+	parser.add_argument('--max_generations', type=int, default=40, help='maximum generations')
 
 	parser.add_argument('--n_parallel', type=int, default=1,
 						help='number of threads or processes to be used for concurrent '
@@ -108,7 +108,6 @@ def read_arguments():
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
 	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
-
 																					"closeness", "betweenness", "second_order",
 																					"community", "community_degree",
 																					"community_degree_spectral", "degree_random",
@@ -130,16 +129,16 @@ def read_arguments():
 	parser.add_argument('--mutation_rate', type=float, default=0.1, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=5, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
-	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
+	parser.add_argument('--node2vec_file', type=str, default="embeddings_walk_length_100_.emb", help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
-	parser.add_argument('--local_search_rate', type=float, default=0, help='evolutionary algorithm local search probability, the global search is set'
+	parser.add_argument('--local_search_rate', type=float, default=1, help='evolutionary algorithm local search probability, the global search is set'
 																			 'automatically to 1-local_search_rate')
 
 	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_approx_spread_mutation',
-	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
+	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
 	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_second_degree_mutation_emb',
-	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_embeddings_mutation',
+	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_embeddings_mutation',
 
 											choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
@@ -249,6 +248,8 @@ if __name__ == "__main__":
 
 	initial_population = create_initial_population(G, args, prng)
 	start = time.time()
+
+	# node2vec_file = "../experiments/node2vec_embeddings_training/out/amazon/amazon/walk_length/dimensions_64/100/seed_0_exp_in/repetition_0/embeddings_walk_length_100_.emb"
 
 	node2vec_model = initialize_node2vec_model(args.node2vec_file)
 
