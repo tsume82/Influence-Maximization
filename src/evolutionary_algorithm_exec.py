@@ -241,11 +241,11 @@ if __name__ == "__main__":
 
 	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
 
-	voronoi_cell = nx.algorithms.voronoi_cells(G, [30, 555])
-	print(voronoi_cell)
-	print(len(voronoi_cell))
-	print(len())
-	exit(0)
+	# voronoi_cell = nx.algorithms.voronoi_cells(G, [30, 555])
+	# print(voronoi_cell)
+	# print(len(voronoi_cell))
+	# print(len())
+	# exit(0)
 
 	prng = random.Random(args.random_seed)
 
