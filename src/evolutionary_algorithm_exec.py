@@ -130,7 +130,7 @@ def read_arguments():
 	parser.add_argument('--mutation_rate', type=float, default=0.1, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=5, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
-	parser.add_argument('--node2vec_file', type=str, default="embeddings_walk_length_100_.emb", help='evolutionary algorithm node2vec_file')
+	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
 	parser.add_argument('--local_search_rate', type=float, default=0, help='evolutionary algorithm local search probability, the global search is set'
@@ -241,13 +241,16 @@ if __name__ == "__main__":
 
 	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
 
-	# voronoi_cell = nx.algorithms.voronoi_cells(G, [30, 555])
-	# print(voronoi_cell)
-	# print(len(voronoi_cell))
-	# print(len())
-	# exit(0)
-
 	prng = random.Random(args.random_seed)
+
+	# seeds = prng.sample(G.nodes(), 10)
+	# print(seeds)
+	# voronoi_cell = nx.algorithms.voronoi_cells(G, seeds)
+	# print(voronoi_cell.keys())
+	# for c in voronoi_cell['unreachable']:
+	# 	print(G.in_degree(c))
+	# print(len(voronoi_cell['unreachable']))
+	# exit(0)
 
 	fitness_function = initialize_fitness_function(G, args)
 
