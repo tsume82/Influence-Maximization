@@ -6,6 +6,7 @@ from functools import partial
 import random
 import argparse
 import time
+import networkx as nx
 
 from gensim.models import KeyedVectors
 
@@ -13,14 +14,14 @@ from gensim.models import KeyedVectors
 from ea.evolutionary_algorithm import ea_influence_maximization
 import ea.mutators as mutators
 
-# from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
-# from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-# from spread.two_hop import two_hop_spread as two_hop
+from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from spread.two_hop import two_hop_spread as two_hop
 
 
-from spread_pyx.monte_carlo import MonteCarlo_simulation as monte_carlo
-from spread_pyx.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-from spread_pyx.two_hop import two_hop_spread as two_hop
+# from spread_pyx.monte_carlo import MonteCarlo_simulation as monte_carlo
+# from spread_pyx.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+# from spread_pyx.two_hop import two_hop_spread as two_hop
 
 from smart_initialization import max_centrality_individual, Community_initialization, degree_random
 
@@ -107,7 +108,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="community_degree_spectral", choices=["none", "degree", "eigenvector", "katz",
 																					"closeness", "betweenness", "second_order",
 																					"community", "community_degree",
 																					"community_degree_spectral", "degree_random",
@@ -132,7 +133,7 @@ def read_arguments():
 	parser.add_argument('--node2vec_file', type=str, default="embeddings_walk_length_100_.emb", help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
-	parser.add_argument('--local_search_rate', type=float, default=1, help='evolutionary algorithm local search probability, the global search is set'
+	parser.add_argument('--local_search_rate', type=float, default=0, help='evolutionary algorithm local search probability, the global search is set'
 																			 'automatically to 1-local_search_rate')
 
 	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_approx_spread_mutation',
@@ -239,6 +240,12 @@ if __name__ == "__main__":
 	args = read_arguments()
 
 	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
+
+	voronoi_cell = nx.algorithms.voronoi_cells(G, [30, 555])
+	print(voronoi_cell)
+	print(len(voronoi_cell))
+	print(len())
+	exit(0)
 
 	prng = random.Random(args.random_seed)
 
