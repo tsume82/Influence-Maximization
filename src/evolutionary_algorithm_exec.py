@@ -85,7 +85,7 @@ def read_arguments():
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=100, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=100, help='offspring size of the ea')
-	parser.add_argument('--random_seed', type=int, default=45, help='seed to initialize the pseudo-random number '
+	parser.add_argument('--random_seed', type=int, default=48, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=40, help='maximum generations')
 
@@ -108,7 +108,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="community_degree_spectral", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
 																					"closeness", "betweenness", "second_order",
 																					"community", "community_degree",
 																					"community_degree_spectral", "degree_random",
@@ -144,9 +144,10 @@ def read_arguments():
 											choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
 								 "ea_ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
-	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
-						choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
-								 "ea_global_low_spread", "ea_global_low_additional_spread"], help='global search mutation operator')
+	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_subpopulation_mutation",
+	# parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
+											choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
+								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
 
 	parser.add_argument('--adaptive_local_rate', type=bool, default=False, help='minimum degree for a node to be inserted into nodes pool in ea')
 	args = parser.parse_args()
@@ -239,33 +240,23 @@ def initialize_inidividuls_file(individuals_file):
 if __name__ == "__main__":
 	args = read_arguments()
 
+	print("ciaone")
+
 	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
 
 	prng = random.Random(args.random_seed)
 
-	# seeds = prng.sample(G.nodes(), 10)
-	# print(seeds)
-	# voronoi_cell = nx.algorithms.voronoi_cells(G, seeds)
-	# print(voronoi_cell.keys())
-	# for c in voronoi_cell['unreachable']:
-	# 	print(G.in_degree(c))
-	# print(len(voronoi_cell['unreachable']))
-	# exit(0)
-
 	fitness_function = initialize_fitness_function(G, args)
 
 	population_file, generations_file, log_file = create_out_dir(args)
-
 	initial_population = create_initial_population(G, args, prng)
-	start = time.time()
-
-	# node2vec_file = "../experiments/node2vec_embeddings_training/out/amazon/amazon/walk_length/dimensions_64/100/seed_0_exp_in/repetition_0/embeddings_walk_length_100_.emb"
 
 	node2vec_model = initialize_node2vec_model(args.node2vec_file)
 
 	generations_file = initialize_stats(generations_file)
 	individuals_file = initialize_inidividuls_file(population_file)
 
+	start = time.time()
 	best_seed_set, best_spread = ea_influence_maximization(k=args.k,
 														   G=G,
 														   pop_size=args.population_size,
