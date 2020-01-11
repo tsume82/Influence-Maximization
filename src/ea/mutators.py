@@ -202,7 +202,6 @@ def ea_local_approx_spread_mutation(prng, candidate, args):
 	else:
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 	return mutatedIndividual
-#----------------------------
 
 
 def ea_local_embeddings_mutation(prng, candidate, args):
@@ -226,6 +225,31 @@ def ea_local_embeddings_mutation(prng, candidate, args):
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
+
+
+def ea_global_subpopulation_mutation(prng, candidate, args):
+
+	"""
+	randomly mutates one gene of the individual
+	"""
+	# nodes = args["_ec"].bounder.values
+
+	mutatedIndividual = list(set(candidate))
+
+	# choose random place
+	gene = prng.randint(0, len(mutatedIndividual) - 1)
+	nodes = list(args["voronoi_cells"][list(args["voronoi_cells"].keys())[gene]])
+	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+
+	# avoid repetitions
+	while mutated_node in mutatedIndividual:
+		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+
+	mutatedIndividual[gene] = mutated_node
+
+	return mutatedIndividual
+
+# ----------------------------
 
 
 def ea_local_neighbors_spread_mutation(prng, candidate, args):

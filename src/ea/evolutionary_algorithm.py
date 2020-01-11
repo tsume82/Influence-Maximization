@@ -1,11 +1,13 @@
 import inspyred
-
+import networkx as nx
 
 from ea.mutators import ea_global_local_alteration
 from ea.crossovers import ea_one_point_crossover
 from ea.observers import ea_observer1, ea_observer2
 from ea.evaluators import one_process_evaluator, multiprocess_evaluator
-from ea.generators import generator
+from ea.generators import generator, subpopulation_generator
+import ea.mutators as mutators
+# from ea.generators import subpopulation_generator as generator
 from ea.replacers import ea_replacer
 
 
@@ -71,6 +73,12 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
+	seeds = prng.sample(nodes, k)
+	voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
+
+	if global_mutation_operator == mutators.ea_global_subpopulation_mutation:
+		generator = subpopulation_generator
+
 	# run the EA
 	final_pop = ea.evolve(generator=generator,
 						  evaluator=evaluator,
@@ -99,7 +107,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  local_mutation_rate=local_mutation_rate,
 						  adaptive_local_rate=adaptive_local_rate,
 						  model=node2vec_model,
-						  max_individual_copies=max_individual_copies)
+						  max_individual_copies=max_individual_copies,
+						  voronoi_cells=voronoi_cells)
 
 	best_individual = max(final_pop)
 	best_seed_set = best_individual.candidate
