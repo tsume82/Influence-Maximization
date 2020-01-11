@@ -77,10 +77,12 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
 
 	if global_mutation_operator == mutators.ea_global_subpopulation_mutation:
-		generator = subpopulation_generator
+		gen = subpopulation_generator
+	else:
+		gen = generator
 
 	# run the EA
-	final_pop = ea.evolve(generator=generator,
+	final_pop = ea.evolve(generator=gen,
 						  evaluator=evaluator,
 						  bounder= bounder,
 						  maximize=True,
