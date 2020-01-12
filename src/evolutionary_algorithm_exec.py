@@ -85,7 +85,7 @@ def read_arguments():
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=100, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=100, help='offspring size of the ea')
-	parser.add_argument('--random_seed', type=int, default=48, help='seed to initialize the pseudo-random number '
+	parser.add_argument('--random_seed', type=int, default=43, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=40, help='maximum generations')
 
@@ -133,19 +133,19 @@ def read_arguments():
 	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
-	parser.add_argument('--local_search_rate', type=float, default=0, help='evolutionary algorithm local search probability, the global search is set'
+	parser.add_argument('--local_search_rate', type=float, default=0.5, help='evolutionary algorithm local search probability, the global search is set'
 																			 'automatically to 1-local_search_rate')
 
 	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_approx_spread_mutation',
-	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
+	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
 	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_second_degree_mutation_emb',
-	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_embeddings_mutation',
+	# parser.add_argument('--local_mutation_operator', type=str, default='ea_local_embeddings_mutation',
 
 											choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
 								 "ea_ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
-	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_subpopulation_mutation",
-	# parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
+	# parser.add_argument('--global_mutation_operator', type=str, default="ea_global_subpopulation_mutation",
+	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
 											choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
 
@@ -240,8 +240,6 @@ def initialize_inidividuls_file(individuals_file):
 if __name__ == "__main__":
 	args = read_arguments()
 
-	print("ciaone")
-
 	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
 
 	prng = random.Random(args.random_seed)
@@ -250,6 +248,9 @@ if __name__ == "__main__":
 
 	population_file, generations_file, log_file = create_out_dir(args)
 	initial_population = create_initial_population(G, args, prng)
+
+	# args.node2vec_file = "../experiments/node2vec_embeddings_training_best/out/amazon" \
+	# 					 "/dimensions_128/seed_4_exp_in/repetition_0/embeddingsseed_4_embedding.emb.emb"
 
 	node2vec_model = initialize_node2vec_model(args.node2vec_file)
 
