@@ -73,13 +73,13 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
-	seeds = prng.sample(nodes, k)
-	voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
-
 	if global_mutation_operator == mutators.ea_global_subpopulation_mutation:
 		gen = subpopulation_generator
+		seeds = prng.sample(nodes, k)
+		voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
 	else:
 		gen = generator
+		voronoi_cells = None
 
 	# run the EA
 	final_pop = ea.evolve(generator=gen,
