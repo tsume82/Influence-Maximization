@@ -150,7 +150,7 @@ def read_arguments():
 	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
 											choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
-								 "ea_ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
+								 "ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
 	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
 											choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
