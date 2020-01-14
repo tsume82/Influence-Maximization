@@ -380,14 +380,14 @@ def ea_global_low_additional_spread(prng, candidate, args):
 		if c in nodes: nodes.remove(c)
 	mutatedIndividual = list(set(candidate))
 
-	spread_individual = args["spread_function"](A=mutatedIndividual, random_generator=prng)[0]
+	spread_individual = args["fitness_function"](A=mutatedIndividual, random_generator=prng)[0]
 	# choose random place
 	probs = []
 	for node in mutatedIndividual:
 		mutatedIndividual_without = mutatedIndividual.copy()
 		mutatedIndividual_without.remove(node)
 
-		spread_without = args["spread_function"](A=mutatedIndividual_without, random_generator=prng)[0]
+		spread_without = args["fitness_function"](A=mutatedIndividual_without, random_generator=prng)[0]
 		additional_spread = spread_individual - spread_without
 		probs.append(additional_spread)
 
