@@ -309,11 +309,11 @@ def ea_local_additional_spread_mutation(prng, candidate, args):
 
 		mutatedIndividual_without = mutatedIndividual.copy()
 		mutatedIndividual_without.remove(mutatedIndividual[gene])
-		spread_without = args["spread_function"](A=mutatedIndividual_without, random_generator=prng)[0]
+		spread_without = args["fitness_function"](A=mutatedIndividual_without, random_generator=prng)[0]
 		for node in nodes:
 			mutatedIndividual_with = mutatedIndividual_without.copy()
 			mutatedIndividual_with.append(node)
-			spread_with = args["spread_function"](A=mutatedIndividual_with, random_generator=prng)[0]
+			spread_with = args["fitness_function"](A=mutatedIndividual_with, random_generator=prng)[0]
 			additional_spread = spread_with - spread_without
 			spreads.append(additional_spread)
 		# print(spreads)
@@ -363,12 +363,6 @@ def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
-
-
-
-
-
-
 
 
 def ea_global_low_additional_spread(prng, candidate, args):
