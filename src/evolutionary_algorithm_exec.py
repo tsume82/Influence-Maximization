@@ -7,6 +7,8 @@ import random
 import argparse
 import time
 import networkx as nx
+import json
+import utils
 
 from gensim.models import KeyedVectors
 
@@ -34,36 +36,36 @@ def create_initial_population(G, args, prng=None):
 	"""
 	# smart initialization
 	initial_population = None
-	if "community" == args.smart_initialization:
+	if "community" == args["smart_initialization"]:
 		# set for now number of clusters equal to the dimension of seed set
-		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
-											 n_clusters=args.k * args.n_clusters)
+		comm_init = Community_initialization(G, random_seed=args["random_seed"], method=args["community_detection_algorithm"],
+											 n_clusters=args["k"] * args["n_clusters"])
 		initial_population = \
-			comm_init.get_comm_members_random(int(args.population_size * args.smart_initialization_percentage),
-											  k=args.k, degree=False)
-	elif "community_degree" == args.smart_initialization:
+			comm_init.get_comm_members_random(int(args["population_size"] * args["smart_initialization_percentage"]),
+											  k=args["k"], degree=False)
+	elif "community_degree" == args["smart_initialization"]:
 
 		# set for now number of clusters equal to the dimension of seed set
-		comm_init = Community_initialization(G, random_seed=args.random_seed, method=args.community_detection_algorithm,
-											 n_clusters=args.k * args.n_clusters)
+		comm_init = Community_initialization(G, random_seed=args["random_seed"], method=args["community_detection_algorithm"],
+											 n_clusters=args["k"] * args["n_clusters"])
 		initial_population = \
-			comm_init.get_comm_members_random(int(args.population_size * args.smart_initialization_percentage),
-											  k=args.k, degree=True)
-	elif "community_degree_spectral" == args.smart_initialization:
-		comm_init = Community_initialization(G, random_seed=args.random_seed, method="spectral_clustering",
-											 n_clusters=args.k * args.n_clusters)
+			comm_init.get_comm_members_random(int(args["population_size"] * args["smart_initialization_percentage"]),
+											  k=args["k"], degree=True)
+	elif "community_degree_spectral" == args["smart_initialization"]:
+		comm_init = Community_initialization(G, random_seed=args["random_seed"], method="spectral_clustering",
+											 n_clusters=args["k"] * args["n_clusters"])
 		initial_population = \
-			comm_init.get_comm_members_random(int(args.population_size * args.smart_initialization_percentage),
-											  k=args.k, degree=True)
-	elif "degree_random" == args.smart_initialization:
-		initial_population = degree_random(args.k, G, int(args.population_size * args.smart_initialization_percentage),
+			comm_init.get_comm_members_random(int(args["population_size"] * args["smart_initialization_percentage"]),
+											  k=args["k"], degree=True)
+	elif "degree_random" == args["smart_initialization"]:
+		initial_population = degree_random(args["k"], G, int(args["population_size"] * args["smart_initialization_percentage"]),
 										   prng)
-	elif "degree_random_ranked" == args.smart_initialization:
-		initial_population = degree_random(args.k, G, int(args.population_size * args.smart_initialization_percentage),
+	elif "degree_random_ranked" == args["smart_initialization"]:
+		initial_population = degree_random(args["k"], G, int(args["population_size"] * args["smart_initialization_percentage"]),
 										   prng, ranked_probability=True)
 
-	elif args.smart_initialization != "none":
-		smart_individual = max_centrality_individual(args.k, G, centrality_metric=args.smart_initialization)
+	elif args["smart_initialization"] != "none":
+		smart_individual = max_centrality_individual(args["k"], G, centrality_metric=args["smart_initialization"])
 		initial_population = [smart_individual]
 
 	return initial_population
@@ -82,8 +84,11 @@ def str2bool(v):
 
 def read_arguments():
 	"""
-	algorithm arguments
+	algorithm arguments, it is sufficient to specify all the parameters in the
+	.json config file, which should be given as a parameter to the script, it should contain all the other
+	script parameters
 	"""
+
 	parser = argparse.ArgumentParser(description='Evolutionary algorithm computation')
 
 	parser.add_argument('--k', type=int, default=10, help='seed set size')
@@ -159,47 +164,59 @@ def read_arguments():
 						const=True, default=False,
 						help="ee.")
 
-	args = parser.parse_args()
+	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
-	# load mutation functions
-	args.local_mutation_operator = getattr(mutators, args.local_mutation_operator)
-	args.global_mutation_operator = getattr(mutators, args.global_mutation_operator)
+	args = parser.parse_args()
+	with open(args.config_file, "r") as f:
+		in_params = json.load(f)
+
+	args = vars(args)
+	ea_args = in_params["script_args"]
+
+	ea_args["config_file"] = args["config_file"]
+	# check whether all the parameters are specified in the config file
+	if set(args.keys()) != set(ea_args.keys()):
+		print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
+		raise KeyError("Missing arguments")
+	args.update(ea_args)
+
+	# make args read only
+	args = utils.make_dict_read_only(args)
 
 	return args
-
 
 def create_out_dir(args):
 	"""
 	creation of the out directory and out files names
 	"""
-	if args.out_dir is None:
+	if args["out_dir"] is None:
 		out_dir = "."
 	else:
-		out_dir = args.out_dir
+		out_dir = args["out_dir"]
 		import os
 
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
 
-	if args.out_name is None:
+	if args["out_name"] is None:
 		out_name = ".csv"
 	else:
-		out_name = args.out_name
+		out_name = args["out_name"]
 
-	if args.out_file is None:
+	if args["out_file"] is None:
 		population_file = out_dir + "/" + "population_" + out_name
 	else:
-		population_file = args.out_file
+		population_file = args["out_file"]
 
-	if args.log_file is None:
+	if args["log_file"] is None:
 		log_file = out_dir + "/" + "log_" + out_name
 	else:
-		log_file = args.log_file
+		log_file = args["log_file"]
 
-	if args.generations_file is None:
+	if args["generations_file"] is None:
 		generations_file = out_dir + "/" + "generations_" + out_name
 	else:
-		generations_file = args.generations_file
+		generations_file = args["generations_file"]
 
 	return population_file, generations_file, log_file
 
@@ -208,14 +225,14 @@ def initialize_fitness_function(G, args):
 	"""
 	fitness function smart initialization
 	"""
-	if args.spread_function is None or args.spread_function == "monte_carlo":
-		spread_function = partial(monte_carlo, no_simulations=args.no_simulations, p=args.p, model=args.model,
+	if args["spread_function"] is None or args["spread_function"] == "monte_carlo":
+		spread_function = partial(monte_carlo, no_simulations=args["no_simulations"], p=args["p"], model=args["model"],
 								  G=G)
-	elif args.spread_function == "monte_carlo_max_hop":
-		spread_function = partial(monte_carlo_max_hop, no_simulations=args.no_simulations, p=args.p,
-								  model=args.model, G=G, max_hop=args.max_hop)
-	elif args.spread_function == "two_hop":
-		spread_function = partial(two_hop, G=G, p=args.p, model=args.model)
+	elif args["spread_function"] == "monte_carlo_max_hop":
+		spread_function = partial(monte_carlo_max_hop, no_simulations=args["no_simulations"], p=args["p"],
+								  model=args["model"], G=G, max_hop=args["max_hop"])
+	elif args["spread_function"] == "two_hop":
+		spread_function = partial(two_hop, G=G, p=args["p"], model=args["model"])
 
 	return spread_function
 
@@ -249,43 +266,45 @@ def initialize_inidividuls_file(individuals_file):
 if __name__ == "__main__":
 	args = read_arguments()
 
-	G = load_graph(args.g_file, args.g_type, args.g_nodes, args.g_new_edges, args.g_seed)
+	G = load_graph(args["g_file"], args["g_type"], args["g_nodes"], args["g_new_edges"], args["g_seed"])
 
-	prng = random.Random(args.random_seed)
+	prng = random.Random(args["random_seed"])
 
 	fitness_function = initialize_fitness_function(G, args)
 
 	population_file, generations_file, log_file = create_out_dir(args)
 	initial_population = create_initial_population(G, args, prng)
 
-	node2vec_model = initialize_node2vec_model(args.node2vec_file)
+	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
 
 	generations_file = initialize_stats(generations_file)
 	individuals_file = initialize_inidividuls_file(population_file)
 
 	start = time.time()
-	best_seed_set, best_spread = ea_influence_maximization(k=args.k,
+	local_mutation_operator = getattr(mutators, args["local_mutation_operator"])
+	global_mutation_operator = getattr(mutators, args["global_mutation_operator"])
+	best_seed_set, best_spread = ea_influence_maximization(k=args["k"],
 														   G=G,
-														   pop_size=args.population_size,
-														   offspring_size=args.offspring_size,
-														   max_generations=args.max_generations,
-														   n_processes=args.n_parallel,
+														   pop_size=args["population_size"],
+														   offspring_size=args["offspring_size"],
+														   max_generations=args["max_generations"],
+														   n_processes=args["n_parallel"],
 														   prng=prng,
 														   initial_population=initial_population,
 														   individuals_file=individuals_file,
 														   fitness_function=fitness_function,
 														   statistics_file=generations_file,
-														   crossover_rate=args.crossover_rate,
-														   mutation_rate=args.mutation_rate,
-														   tournament_size=args.tournament_size,
-														   num_elites=args.num_elites,
+														   crossover_rate=args["crossover_rate"],
+														   mutation_rate=args["mutation_rate"],
+														   tournament_size=args["tournament_size"],
+														   num_elites=args["num_elites"],
 														   node2vec_model=node2vec_model,
-														   min_degree=args.min_degree,
-														   max_individual_copies=args.max_individual_copies,
-														   local_mutation_rate=args.local_search_rate,
-														   local_mutation_operator=args.local_mutation_operator,
-														   global_mutation_operator=args.global_mutation_operator,
-														   adaptive_local_rate=args.adaptive_local_rate)
+														   min_degree=args["min_degree"],
+														   max_individual_copies=args["max_individual_copies"],
+														   local_mutation_rate=args["local_search_rate"],
+														   local_mutation_operator=local_mutation_operator,
+														   global_mutation_operator=global_mutation_operator,
+														   adaptive_local_rate=args["adaptive_local_rate"])
 
 	individuals_file.close()
 	generations_file.close()
@@ -296,12 +315,12 @@ if __name__ == "__main__":
 	print("Spread: ", best_spread)
 
 	# best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
-	best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
+	best_mc_spread, _ = monte_carlo(G, best_seed_set, args["p"], args["no_simulations"], args["model"], prng)
 	print("Best monte carlo spread: ", best_mc_spread)
 
 	# write experiment log
 
-	out_dict = args.__dict__
+	out_dict = args
 	out_dict["exec_time"] = exec_time
 	out_dict["best_fitness"] = best_spread
 	out_dict["best_mc_spread"] = best_mc_spread
