@@ -1,5 +1,7 @@
 from multiprocessing import Pool
 from spread.two_hop import two_hop_spread as two_hop
+import random
+
 
 def multiprocess_evaluator(candidates, args):
 	"""
