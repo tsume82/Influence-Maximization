@@ -9,7 +9,7 @@ import os
 import json
 import subprocess
 
-from utils import args2cmd
+from utils import args2cmd, config_file2cmd
 
 
 def current_commit_revision():
@@ -46,7 +46,8 @@ def run_experiment(in_file, out_dir, hpc=False):
 			data["script_args"]["out_dir"] = out_dir_arg
 			if not os.path.exists(out_dir_arg):
 				os.makedirs(out_dir_arg)
-		cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
+		# cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
+		cmd = config_file2cmd(config_file_name=in_file, exec_name=data["script"], hpc=hpc)
 		already_done = False
 		# ! important assumption: at the end of the execution computation script will produce log file containing
 		#  string "log" in its name
