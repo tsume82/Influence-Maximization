@@ -40,7 +40,7 @@ def invert_levels(dir, level1, level2):
 				shutil.rmtree(dir2)
 
 
-def collect_results(out_dir, csv_prefix="", generations_stats=False):
+def collect_results(out_dir, csv_prefix="", generations_stats=False, delimiter=','):
 	"""
 	merges all csv files in all subdirectories of out_dir recursively in unique pandas
 	dataframe
@@ -57,7 +57,7 @@ def collect_results(out_dir, csv_prefix="", generations_stats=False):
 
 	for filename in all_files:
 
-		df = pd.read_csv(filename, index_col=None, header=0)
+		df = pd.read_csv(filename, index_col=None, header=0, delimiter=delimiter)
 		if generations_stats:
 			path = filename.replace(filename.split("/")[-1], "")
 			path_files = os.listdir(path)
@@ -66,7 +66,7 @@ def collect_results(out_dir, csv_prefix="", generations_stats=False):
 			for f in path_files:
 				if f.startswith("generations"):
 					gen_file = f
-			df_gen = pd.read_csv(path + gen_file, index_col=None, header=0)
+			df_gen = pd.read_csv(path + gen_file, index_col=None, header=0, delimiter=delimiter)
 			diversity = df_gen["diversity"].mean()
 			improvement = df_gen["improvement"].mean()
 			df["diversity"] = diversity
