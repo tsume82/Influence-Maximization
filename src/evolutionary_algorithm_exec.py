@@ -167,18 +167,19 @@ def read_arguments():
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
 	args = parser.parse_args()
-	with open(args.config_file, "r") as f:
-		in_params = json.load(f)
-
 	args = vars(args)
-	ea_args = in_params["script_args"]
+	if args["config_file"] is not None:
+		with open(args["config_file"], "r") as f:
+			in_params = json.load(f)
 
-	ea_args["config_file"] = args["config_file"]
-	# check whether all the parameters are specified in the config file
-	if set(args.keys()) != set(ea_args.keys()):
-		print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
-		raise KeyError("Missing arguments")
-	args.update(ea_args)
+		ea_args = in_params["script_args"]
+
+		ea_args["config_file"] = args["config_file"]
+		# check whether all the parameters are specified in the config file
+		if set(args.keys()) != set(ea_args.keys()):
+			print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
+			raise KeyError("Missing arguments")
+		args.update(ea_args)
 
 	# make args read only
 	args = utils.make_dict_read_only(args)
