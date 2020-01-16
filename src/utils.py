@@ -23,6 +23,22 @@ def args2cmd(args, exec_name, hpc=False):
 	return out
 
 
+def config_file2cmd(config_file_name, exec_name, hpc=False):
+	"""
+	outputs command string with arguments in args
+	:param args: arguments dictionary
+	:param exec_name: string with the name of python script
+	:return: string with command
+	"""
+	if hpc:
+		out = "python3 " + exec_name
+	else:
+		out = "python " + exec_name
+
+	out += "--config_file={}".format(config_file_name)
+	return out
+
+
 def dict2csv(args, csv_name):
 	"""
 	writes dictionary in csv format to the csv_name file
