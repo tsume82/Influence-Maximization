@@ -15,7 +15,7 @@ class Multi_armed_bandit:
 	see https://www.analyticsvidhya.com/blog/2018/09/reinforcement-multi-armed-bandit-scratch-python/
 	for a quick explanation and the original code
 	"""
-	def __init__(self, actions):
+	def __init__(self, actions, exploration_weight=1):
 		"""
 		initialize with the list of actions to choose from
 		:param actions:
@@ -30,6 +30,7 @@ class Multi_armed_bandit:
 		self.n_arms = n_arms
 		self.selected_arms = []
 		self.actions = actions
+		self.exploration_weight = exploration_weight
 
 	def select_action(self):
 		"""
@@ -37,7 +38,7 @@ class Multi_armed_bandit:
 		:return:
 		"""
 		average_reward = self.sums_of_reward / self.n_selections
-		delta = np.sqrt(2 * np.log(self.n_trials + 1) / self.n_selections)
+		delta = self.exploration_weight*np.sqrt(2 * np.log(self.n_trials + 1) / self.n_selections)
 		upper_bound = average_reward + delta
 		idx = np.argmax(upper_bound)
 		self.selected_arms.append(idx)
