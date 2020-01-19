@@ -174,8 +174,11 @@ def read_arguments():
 	parser.add_argument("--adaptive_mutations", type=str2bool, nargs='?',
 						const=True, default=True,
 						help="set to true to use adaptive mutation operator")
+	parser.add_argument("--exploration_weight", type=float, default=1, help="exploration weight for multi-armed bandit problem")
+	parser.add_argument("--moving_avg_len", type=int, default=100, help="moving average length for multi-argmed bandit problem")
 
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
+
 
 	args = parser.parse_args()
 	args = vars(args)
@@ -186,6 +189,7 @@ def read_arguments():
 		ea_args = in_params["script_args"]
 
 		ea_args["config_file"] = args["config_file"]
+		ea_args["out_dir"] = args["out_dir"]
 		# check whether all the parameters are specified in the config file
 		if set(args.keys()) != set(ea_args.keys()):
 			print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
@@ -265,7 +269,7 @@ def initialize_node2vec_model(node2vec_file):
 
 def initialize_stats(generations_file):
 	gf = open(generations_file, "w+")
-	gf.write("generation number, pop_size, worst, best, median, avg, std, diversity, improvement\n")
+	gf.write("generation number, pop_size, worst, best, median, avg, std, diversity, improvement, average_rewards\n")
 	return gf
 
 
@@ -332,7 +336,9 @@ if __name__ == "__main__":
 														   mutators_to_alterate=mutators_to_alterate,
 														   mutation_operator=mutation_operator,
 														   prop_model=args["model"],
-														   p = args["p"])
+														   p = args["p"],
+														   exploration_weight=args["exploration_weight"],
+														   moving_avg_len=args["moving_avg_len"])
 
 	individuals_file.close()
 	generations_file.close()
