@@ -9,6 +9,7 @@ from ea.generators import generator, subpopulation_generator
 import ea.mutators as mutators
 # from ea.generators import subpopulation_generator as generator
 from ea.replacers import ea_replacer
+from multi_armed_bandit import Multi_armed_bandit
 
 
 #TODO: remove from here?
@@ -28,6 +29,27 @@ def filter_nodes(G, min_degree):
 	return nodes
 
 
+@inspyred.ec.variators.crossover
+def ea_variator(prng, candidate1, candidate2, args):
+	randomChoice = prng.random()
+
+	# one-point crossover or mutation that swaps exactly one node with another
+	children = []
+	if randomChoice < args["crossover_rate"]:
+		res = ea_one_point_crossover(prng, candidate1, candidate2, args)
+		for mut in res:
+			children.append(mut)
+
+	randomChoice = prng.random()
+	if randomChoice < args["mutation_rate"]:
+		mutatedIndividual1 = args["mutation_operator"](prng, [candidate1], args)
+		mutatedIndividual2 = args["mutation_operator"](prng, [candidate2], args)
+		children.append(mutatedIndividual1[0])
+		children.append(mutatedIndividual2[0])
+	# print(children)
+	return children
+
+
 def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, max_generations, prng,
 							  crossover_rate=0, mutation_rate=1, n_processes=1, initial_population=[],
 							  individuals_file=None, statistics_file=None, tournament_size=2, num_elites=2,
@@ -35,7 +57,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  max_individual_copies=2, local_mutation_rate=0.5,
 							  local_mutation_operator=None,
 							  global_mutation_operator=None,
-							  adaptive_local_rate=True):
+							  adaptive_local_rate=True, mutators_to_alterate=[],
+							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -51,11 +74,17 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	# ea.variator = [inspyred.ec.variators.n_point_crossover,
 	# 			   inspyred.ec.variators.random_reset_mutation]
 
-	ea.variator = [ea_one_point_crossover,
-				   ea_global_local_alteration]
+	# ea.variator = [ea_one_point_crossover,
+	# 			   mutation_operator]
+
+	ea.variator = [ea_one_point_crossover, mutation_operator]
+	# ea.variator = [mutation_operator]
+	# ea.variator = ea_variator
+
 
 	# replacement operator
 	ea.replacer = inspyred.ec.replacers.generational_replacement
+	# ea.replacer = inspyred.ec.replacers.comma_replacement
 	# ea.replacer = ea_replacer
 
 	# termination condition
@@ -82,6 +111,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 		voronoi_cells = None
 
 	# run the EA
+	mab = Multi_armed_bandit(mutators_to_alterate)
+
 	final_pop = ea.evolve(generator=gen,
 						  evaluator=evaluator,
 						  bounder= bounder,
@@ -109,8 +140,14 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  local_mutation_rate=local_mutation_rate,
 						  adaptive_local_rate=adaptive_local_rate,
 						  model=node2vec_model,
+						  prop_model = prop_model,
 						  max_individual_copies=max_individual_copies,
-						  voronoi_cells=voronoi_cells)
+						  voronoi_cells=voronoi_cells,
+						  mutators_to_alterate=mutators_to_alterate,
+						  mab = mab,
+						  p=p,
+						  mutation_operator=mutation_operator,
+						  offspring_fitness = {})
 
 	best_individual = max(final_pop)
 	best_seed_set = best_individual.candidate
