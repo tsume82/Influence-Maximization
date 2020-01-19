@@ -39,7 +39,7 @@ def config_file2cmd(config_file_name, exec_name, hpc=False):
 	return out
 
 
-def dict2csv(args, csv_name):
+def dict2csv(args, csv_name, delimiter=','):
 	"""
 	writes dictionary in csv format to the csv_name file
 	:param args: in_dictionary
@@ -47,8 +47,8 @@ def dict2csv(args, csv_name):
 	:return:
 	"""
 	with open(csv_name, "w") as f:
-		f.write(",".join(args.keys()) + "\n")
-		f.write(",".join(str(x) for x in args.values()) + "\n")
+		f.write(delimiter.join(args.keys()) + "\n")
+		f.write(delimiter.join(str(x) for x in args.values()) + "\n")
 
 
 class ReadOnlyWrapper(collections.Mapping):
