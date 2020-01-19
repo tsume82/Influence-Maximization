@@ -14,7 +14,14 @@ def ea_observer1(population, num_generations, num_evaluations, args):
 		args["local_mutation_rate"] = div
 	ind_div = individuals_diversity(population)
 	print("generation {}: individuals diversity {}".format(num_generations, ind_div))
+	print("Mutations reward {}".format(args["mab"].sums_of_reward))
 
+	# check for repetitions
+	for ind in population:
+		if len(set(ind.candidate)) != len(ind.candidate):
+			raise NameError("Nodes repetition inside an individual")
+	# reset offspring fitnesses
+	args["offspring_fitness"] = {}
 	return
 
 
@@ -38,7 +45,7 @@ def ea_observer2(population, num_generations, num_evaluations, args):
 
 	sf.seek(sf.tell()-1, os.SEEK_SET)
 
-	sf.write("{},".format(diversity(population)))
+	sf.write(",{},".format(diversity(population)))
 	sf.write("{}\n".format(generation_stats["improvement"]))
 
 	return
