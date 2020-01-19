@@ -1,7 +1,6 @@
 import inspyred
 import numpy as np
 
-# def ea_global_random_mutation(prng, candidate, args):
 
 def ea_global_random_mutation(prng, candidate, args):
 
@@ -144,7 +143,7 @@ def ea_global_low_deg_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 
-@inspyred.ec.variators.mutator
+# @inspyred.ec.variators.mutator
 def ea_global_local_alteration(prng, candidate, args):
 	"""
 	this method calls with certain probability global and local mutations, those must be specified in args as
@@ -194,7 +193,10 @@ def ea_local_approx_spread_mutation(prng, candidate, args):
 				# !very roughly approximated, may include repetitions
 				neighbors_of_neighbors = list(args["G"].neighbors(node_neigh))
 				for node_neigh_neigh in neighbors_of_neighbors:
-					approx_spread += 1/(args["G"].in_degree(node_neigh_neigh))
+					if args["prop_model"]=="WC":
+						approx_spread += 1/(args["G"].in_degree(node_neigh_neigh))
+					else:
+						approx_spread += args["p"]
 			approx_spreads.append(approx_spread)
 		probs = np.array(approx_spreads) / max(approx_spreads)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
@@ -248,6 +250,41 @@ def ea_global_subpopulation_mutation(prng, candidate, args):
 	mutatedIndividual[gene] = mutated_node
 
 	return mutatedIndividual
+
+
+@inspyred.ec.variators.mutator
+def ea_adaptive_mutators_alteration(prng, candidate, args):
+	"""
+	this method calls with certain probability global and local mutations, those must be specified in args as
+	parameters
+	:param prng:
+	:param candidate:
+	:param args:
+	:return:
+	"""
+	# for i, individual in enumerate(args["_ec"].population):
+	# 	if set(individual.candidate) == set(candidate):
+	if tuple(set(candidate)) not in args["offspring_fitness"].keys():
+		old_fitness=args["fitness_function"](A=candidate, random_generator=prng)[0]
+		args["offspring_fitness"][tuple(set(candidate))]=old_fitness
+	else:
+		old_fitness = args["offspring_fitness"][tuple(set(candidate))]
+
+	mutation = args["mab"].select_action()
+	mutatedIndividual = mutation(prng, candidate, args)
+	if tuple(set(mutatedIndividual)) not in args["offspring_fitness"].keys():
+		new_fitness = args["fitness_function"](A=mutatedIndividual, random_generator=prng)[0]
+		# save new fitness to the results
+		args["offspring_fitness"][tuple(set(mutatedIndividual))]=new_fitness
+	else:
+		new_fitness = args["offspring_fitness"][tuple(set(mutatedIndividual))]
+	improvement = (new_fitness - old_fitness) / old_fitness
+	reward = improvement if improvement > 0 else 0
+	args["mab"].update_reward(reward)
+	if improvement > 0:
+		return mutatedIndividual
+	else:
+		return candidate
 
 # ----------------------------
 
