@@ -149,7 +149,7 @@ def read_arguments():
 	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1, help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=0, help='minimum degree for a node to be inserted into nodes pool in ea')
-	parser.add_argument('--local_search_rate', type=float, default=1, help='evolutionary algorithm local search probability, the global search is set'
+	parser.add_argument('--local_search_rate', type=float, default=0, help='evolutionary algorithm local search probability, the global search is set'
 																			 'automatically to 1-local_search_rate')
 
 	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
@@ -159,10 +159,21 @@ def read_arguments():
 	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
 											choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
-
+	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=["ea_local_neighbors_random_mutation",
+																				"ea_local_embeddings_mutation",
+																				"ea_local_neighbors_second_degree_mutation",
+																				"ea_local_approx_spread_mutation",
+																				"ea_global_low_deg_mutation",
+																				"ea_global_low_additional_spread",
+																				"ea_global_low_spread",
+																				"ea_global_random_mutation"],
+						help='list of mutation methods to alterate')
 	parser.add_argument("--adaptive_local_rate", type=str2bool, nargs='?',
 						const=True, default=False,
 						help="ee.")
+	parser.add_argument("--adaptive_mutations", type=str2bool, nargs='?',
+						const=True, default=True,
+						help="set to true to use adaptive mutation operator")
 
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
@@ -183,8 +194,8 @@ def read_arguments():
 
 	# make args read only
 	args = utils.make_dict_read_only(args)
-
 	return args
+
 
 def create_out_dir(args):
 	"""
@@ -276,7 +287,9 @@ if __name__ == "__main__":
 	population_file, generations_file, log_file = create_out_dir(args)
 	initial_population = create_initial_population(G, args, prng)
 
+	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/amazon/dimensions_128/seed_4_exp_in/repetition_0/embeddingsseed_4_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
+	# node2vec_model = initialize_node2vec_model(node2vec_file)
 
 	generations_file = initialize_stats(generations_file)
 	individuals_file = initialize_inidividuls_file(population_file)
@@ -284,6 +297,16 @@ if __name__ == "__main__":
 	start = time.time()
 	local_mutation_operator = getattr(mutators, args["local_mutation_operator"])
 	global_mutation_operator = getattr(mutators, args["global_mutation_operator"])
+	if args["adaptive_mutations"]:
+		# exit(0)
+		mutation_operator = mutators.ea_adaptive_mutators_alteration
+	else:
+		mutation_operator = mutators.ea_global_local_alteration
+
+	mutators_to_alterate = []
+	for m in args["mutators_to_alterate"]:
+		mutators_to_alterate.append(getattr(mutators, m))
+
 	best_seed_set, best_spread = ea_influence_maximization(k=args["k"],
 														   G=G,
 														   pop_size=args["population_size"],
@@ -305,7 +328,11 @@ if __name__ == "__main__":
 														   local_mutation_rate=args["local_search_rate"],
 														   local_mutation_operator=local_mutation_operator,
 														   global_mutation_operator=global_mutation_operator,
-														   adaptive_local_rate=args["adaptive_local_rate"])
+														   adaptive_local_rate=args["adaptive_local_rate"],
+														   mutators_to_alterate=mutators_to_alterate,
+														   mutation_operator=mutation_operator,
+														   prop_model=args["model"],
+														   p = args["p"])
 
 	individuals_file.close()
 	generations_file.close()
@@ -321,9 +348,9 @@ if __name__ == "__main__":
 
 	# write experiment log
 
-	out_dict = args
+	out_dict = args.get_copy()
 	out_dict["exec_time"] = exec_time
 	out_dict["best_fitness"] = best_spread
 	out_dict["best_mc_spread"] = best_mc_spread
 
-	dict2csv(args=out_dict, csv_name=log_file)
+	dict2csv(args=out_dict, csv_name=log_file, delimiter=';')
