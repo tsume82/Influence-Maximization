@@ -23,7 +23,7 @@ def args2cmd(args, exec_name, hpc=False):
 	return out
 
 
-def config_file2cmd(config_file_name, exec_name, hpc=False):
+def config_file2cmd(config_file_name, out_dir, exec_name, hpc=False):
 	"""
 	outputs command string with arguments in args
 	:param args: arguments dictionary
@@ -35,7 +35,7 @@ def config_file2cmd(config_file_name, exec_name, hpc=False):
 	else:
 		out = "python " + exec_name
 
-	out += "--config_file={}".format(config_file_name)
+	out += " --config_file={} --out_dir={}".format(config_file_name, out_dir)
 	return out
 
 
