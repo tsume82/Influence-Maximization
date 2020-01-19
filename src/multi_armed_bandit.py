@@ -15,13 +15,13 @@ class Multi_armed_bandit:
 	see https://www.analyticsvidhya.com/blog/2018/09/reinforcement-multi-armed-bandit-scratch-python/
 	for a quick explanation and the original code
 	"""
-	def __init__(self, actions, exploration_weight=1):
+	def __init__(self, actions, exploration_weight=1, moving_avg_len=100):
 		"""
 		initialize with the list of actions to choose from
 		:param actions:
 		"""
 		n_arms = len(actions)
-		self.moving_avg_len = 100
+		self.moving_avg_len = moving_avg_len
 		self.sums_of_reward = np.array([0.]*n_arms)
 		self.rewards = np.zeros((n_arms, self.moving_avg_len), dtype=float)
 		self.n_selections = np.array([1e-300]*n_arms)
