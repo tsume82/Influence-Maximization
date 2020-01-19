@@ -58,7 +58,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  local_mutation_operator=None,
 							  global_mutation_operator=None,
 							  adaptive_local_rate=True, mutators_to_alterate=[],
-							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01):
+							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01,
+							  exploration_weight=1, moving_avg_len=100):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -111,7 +112,7 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 		voronoi_cells = None
 
 	# run the EA
-	mab = Multi_armed_bandit(mutators_to_alterate)
+	mab = Multi_armed_bandit(mutators_to_alterate, exploration_weight, moving_avg_len)
 
 	final_pop = ea.evolve(generator=gen,
 						  evaluator=evaluator,
