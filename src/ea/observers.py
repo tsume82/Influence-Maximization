@@ -47,6 +47,6 @@ def ea_observer2(population, num_generations, num_evaluations, args):
 
 	sf.write(",{},".format(diversity(population)))
 	sf.write("{},".format(generation_stats["improvement"]))
-	sf.write("{}\n".format(args["mab"].sums_of_reward/args["mab"].n_selections))
+	sf.write("{}\n".format(args["mab"].n_selections))
 
 	return
