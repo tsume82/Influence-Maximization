@@ -18,6 +18,7 @@ import ea.mutators as mutators
 
 from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from spread.monte_carlo_max_hop_mark import MonteCarlo_simulation as monte_carlo_max_hop_mark
 from spread.two_hop import two_hop_spread as two_hop
 
 
@@ -153,21 +154,23 @@ def read_arguments():
 																			 'automatically to 1-local_search_rate')
 
 	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
-											choices=['ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
+											choices=["ea_local_selected_mutation", 'ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
 								 "ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
 	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
-											choices=["ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
+											choices=["ea_global_selected_mutation", "ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
-	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=["ea_local_neighbors_random_mutation",
-																				"ea_local_embeddings_mutation",
-																				"ea_local_neighbors_second_degree_mutation",
-																				"ea_local_approx_spread_mutation",
-																				"ea_global_low_deg_mutation",
-																				"ea_global_low_additional_spread",
-																				"ea_global_low_spread",
-																				"ea_global_random_mutation"],
+	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=[ "ea_local_neighbors_random_mutation",
+																				 # "ea_local_embeddings_mutation",
+																				 "ea_local_neighbors_second_degree_mutation",
+																				 "ea_local_approx_spread_mutation",
+																				 "ea_global_low_deg_mutation",
+																				 "ea_global_low_additional_spread",
+																				 "ea_global_low_spread",
+																				 "ea_global_random_mutation",
+																				 "ea_local_selected_mutation"],
 						help='list of mutation methods to alterate')
+
 	parser.add_argument("--adaptive_local_rate", type=str2bool, nargs='?',
 						const=True, default=False,
 						help="ee.")
@@ -269,7 +272,7 @@ def initialize_node2vec_model(node2vec_file):
 
 def initialize_stats(generations_file):
 	gf = open(generations_file, "w+")
-	gf.write("generation number, pop_size, worst, best, median, avg, std, diversity, improvement, average_rewards\n")
+	gf.write("generation number, pop_size, worst, best, median, avg, std, diversity, improvement, number_of_selections\n")
 	return gf
 
 
@@ -286,6 +289,29 @@ if __name__ == "__main__":
 
 	prng = random.Random(args["random_seed"])
 
+	# load mutation functions
+
+	local_mutation_operator = getattr(mutators, args["local_mutation_operator"])
+	global_mutation_operator = getattr(mutators, args["global_mutation_operator"])
+	if args["adaptive_mutations"]:
+		mutation_operator = mutators.ea_adaptive_mutators_alteration
+	else:
+		mutation_operator = mutators.ea_global_local_alteration
+
+	mutators_to_alterate = []
+	for m in args["mutators_to_alterate"]:
+		mutators_to_alterate.append(getattr(mutators, m))
+
+	if local_mutation_operator == mutators.ea_local_selected_mutation \
+		or global_mutation_operator == mutators.ea_global_selected_mutation \
+		or mutators.ea_local_selected_mutation.__name__ in args["mutators_to_alterate"] \
+		or mutators.ea_global_selected_mutation.__name__ in args["mutators_to_alterate"]:
+		monte_carlo_max_hop = monte_carlo_max_hop_mark
+		init_dict = dict()
+		for n in G.nodes():
+			init_dict[n] = {}
+		nx.set_node_attributes(G, init_dict, name="activated_by")
+
 	fitness_function = initialize_fitness_function(G, args)
 
 	population_file, generations_file, log_file = create_out_dir(args)
@@ -299,18 +325,6 @@ if __name__ == "__main__":
 	individuals_file = initialize_inidividuls_file(population_file)
 
 	start = time.time()
-	local_mutation_operator = getattr(mutators, args["local_mutation_operator"])
-	global_mutation_operator = getattr(mutators, args["global_mutation_operator"])
-	if args["adaptive_mutations"]:
-		# exit(0)
-		mutation_operator = mutators.ea_adaptive_mutators_alteration
-	else:
-		mutation_operator = mutators.ea_global_local_alteration
-
-	mutators_to_alterate = []
-	for m in args["mutators_to_alterate"]:
-		mutators_to_alterate.append(getattr(mutators, m))
-
 	best_seed_set, best_spread = ea_influence_maximization(k=args["k"],
 														   G=G,
 														   pop_size=args["population_size"],
