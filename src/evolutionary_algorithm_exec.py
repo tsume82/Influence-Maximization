@@ -154,11 +154,11 @@ def read_arguments():
 																			 'automatically to 1-local_search_rate')
 
 	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
-											choices=["ea_local_selected_mutation", 'ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
+											choices=["ea_local_activation_mutation", 'ea_local_neighbors_second_degree_mutation', "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
 								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
 								 "ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"], help='local search mutation operator')
 	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
-											choices=["ea_global_selected_mutation", "ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
+											choices=["ea_global_activation_mutation", "ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
 	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=[ "ea_local_neighbors_random_mutation",
 																				 # "ea_local_embeddings_mutation",
@@ -168,7 +168,7 @@ def read_arguments():
 																				 "ea_global_low_additional_spread",
 																				 "ea_global_low_spread",
 																				 "ea_global_random_mutation",
-																				 "ea_local_selected_mutation"],
+																				 "ea_local_activation_mutation"],
 						help='list of mutation methods to alterate')
 
 	parser.add_argument("--adaptive_local_rate", type=str2bool, nargs='?',
@@ -302,10 +302,10 @@ if __name__ == "__main__":
 	for m in args["mutators_to_alterate"]:
 		mutators_to_alterate.append(getattr(mutators, m))
 
-	if local_mutation_operator == mutators.ea_local_selected_mutation \
-		or global_mutation_operator == mutators.ea_global_selected_mutation \
-		or mutators.ea_local_selected_mutation.__name__ in args["mutators_to_alterate"] \
-		or mutators.ea_global_selected_mutation.__name__ in args["mutators_to_alterate"]:
+	if local_mutation_operator == mutators.ea_local_activation_mutation \
+		or global_mutation_operator == mutators.ea_global_activation_mutation \
+		or mutators.ea_local_activation_mutation.__name__ in args["mutators_to_alterate"] \
+		or mutators.ea_global_activation_mutation.__name__ in args["mutators_to_alterate"]:
 		monte_carlo_max_hop = monte_carlo_max_hop_mark
 		init_dict = dict()
 		for n in G.nodes():

@@ -281,11 +281,9 @@ def ea_adaptive_mutators_alteration(prng, candidate, args):
 	improvement = (new_fitness - old_fitness) / old_fitness
 	reward = improvement if improvement > 0 else 0
 	args["mab"].update_reward(reward)
-	if improvement > 0:
-		return mutatedIndividual
-	else:
-		return candidate
-
+	# if improvement > 0:
+	return mutatedIndividual
+	# return candidate
 # ----------------------------
 
 
@@ -458,3 +456,83 @@ def ea_differential_evolution_mutation(prng, candidate, args):
 		mutatedIndividual.append(n1)
 
 	return mutatedIndividual
+
+
+# @inspyred.ec.variators.mutator
+def ea_global_activation_mutation(prng, candidate, args):
+
+	"""
+	randomly mutates one gene of the individual
+	"""
+	nodes = args["_ec"].bounder.values.copy()
+
+	mutatedIndividual = list(set(candidate))
+
+	# choose random place
+	gene = prng.randint(0, len(mutatedIndividual) - 1)
+	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+
+	# old_node = candidate[gene]
+
+	# avoid repetitions
+	ok = False
+	while not ok:
+		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+		ok = True
+		G_nodes = args["G"].nodes
+		for node in candidate:
+			if node in G_nodes[mutated_node]["activated_by"].keys():
+				ok = False
+			if mutated_node in G_nodes[node]["activated_by"].keys():
+				ok = False
+
+	# avoid nodes by which the node was activated
+	# avoid nodes which have been activated by the mutation node
+
+	mutatedIndividual[gene] = mutated_node
+
+
+	return mutatedIndividual
+
+
+# @inspyred.ec.variators.mutator
+def ea_local_activation_mutation(prng, candidate, args):
+
+	"""
+	randomly mutates one gene of the individual
+	"""
+	nodes = args["_ec"].bounder.values.copy()
+	probabilities = [1]*len(nodes)
+
+	mutatedIndividual = list(set(candidate))
+
+	# choose random place
+	gene = prng.randint(0, len(mutatedIndividual) - 1)
+
+	old_node = candidate[gene]
+	G_nodes = args["G"].nodes
+	if len(G_nodes[old_node]["activated_by"])>0:
+		nodes = list(G_nodes[old_node]["activated_by"].keys())
+		probabilities = list(G_nodes[old_node]["activated_by"].values())
+
+	probabilities = np.array(probabilities)
+	probabilities[np.argmax(probabilities)] *=10
+
+	mutated_node = prng.choices(nodes, probabilities)[0]
+	# mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+
+	trials = args["k"]
+	# avoid repetitions
+	while mutated_node in mutatedIndividual and trials > 0:
+		mutated_node = prng.choices(nodes, probabilities)[0]
+		trials -= 1
+	if trials == 0:
+		# random mutation
+		nodes = args["_ec"].bounder.values.copy()
+		while mutated_node in mutatedIndividual:
+			mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+
+	mutatedIndividual[gene] = mutated_node
+
+	return mutatedIndividual
+
