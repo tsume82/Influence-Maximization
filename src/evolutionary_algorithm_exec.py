@@ -92,7 +92,7 @@ def read_arguments():
 
 	parser = argparse.ArgumentParser(description='Evolutionary algorithm computation')
 
-	parser.add_argument('--k', type=int, default=10, help='seed set size')
+	parser.add_argument('--k', type=int, default=2, help='seed set size')
 	parser.add_argument('--p', type=float, default=0.01, help='probability of influence spread in IC model')
 	parser.add_argument('--spread_function', default="monte_carlo_max_hop",
 						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
@@ -100,20 +100,22 @@ def read_arguments():
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
-	parser.add_argument('--population_size', type=int, default=100, help='population size of the ea')
-	parser.add_argument('--offspring_size', type=int, default=100, help='offspring size of the ea')
+	parser.add_argument('--population_size', type=int, default=10, help='population size of the ea')
+	parser.add_argument('--offspring_size', type=int, default=10, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=43, help='seed to initialize the pseudo-random number '
 																	'generation')
-	parser.add_argument('--max_generations', type=int, default=100, help='maximum generations')
+	parser.add_argument('--max_generations', type=int, default=10, help='maximum generations')
 
 	parser.add_argument('--n_parallel', type=int, default=1,
 						help='number of threads or processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='amazon', choices=['barabasi_albert', 'gaussian_random_partition',
+	parser.add_argument('--g_type', default='tiny_amazon_community', choices=['barabasi_albert', 'gaussian_random_partition',
 															 'wiki', 'amazon', 'epinions',
-															 'twitter', 'facebook', 'CA-GrQc'],
+															 'twitter', 'facebook', 'CA-GrQc', "tiny_wiki",
+															 "tiny_amazon", "tiny_CA-GrQc",  "tiny_wiki_community",
+															 "tiny_amazon_community", "tiny_CA-GrQc_community"],
 						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
@@ -126,7 +128,7 @@ def read_arguments():
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
 	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
-																					"closeness", "betweenness", "second_order",
+																					"closeness", "betweenness",
 																					"community", "community_degree",
 																					"community_degree_spectral", "degree_random",
 																					"degree_random_ranked"],
@@ -160,15 +162,16 @@ def read_arguments():
 	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
 											choices=["ea_global_activation_mutation", "ea_global_low_deg_mutation", "ea_global_random_mutation", "ea_differential_evolution_mutation",
 								 "ea_global_low_spread", "ea_global_low_additional_spread", "ea_global_subpopulation_mutation"], help='global search mutation operator')
-	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=[ "ea_local_neighbors_random_mutation",
-																				 # "ea_local_embeddings_mutation",
-																				 "ea_local_neighbors_second_degree_mutation",
-																				 "ea_local_approx_spread_mutation",
-																				 "ea_global_low_deg_mutation",
-																				 "ea_global_low_additional_spread",
-																				 "ea_global_low_spread",
+	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=[ #"ea_local_neighbors_random_mutation",
+																				 #"ea_local_embeddings_mutation",
+																				 #"ea_local_neighbors_second_degree_mutation",
+																				 #"ea_local_approx_spread_mutation",
+																				 # "ea_global_low_deg_mutation",
+																				 # "ea_global_low_additional_spread",
+																				 # "ea_global_low_spread",
 																				 "ea_global_random_mutation",
-																				 "ea_local_activation_mutation"],
+																				 # "ea_local_activation_mutation",
+																				 ],
 						help='list of mutation methods to alterate')
 
 	parser.add_argument("--adaptive_local_rate", type=str2bool, nargs='?',
@@ -368,7 +371,16 @@ if __name__ == "__main__":
 
 	# write experiment log
 
+
+
+
 	out_dict = args.get_copy()
+	# if the dataset is one of the tiny datasets, save the ranking archieved
+	if "tiny" in out_dict["g_type"]:
+		score, total = utils.get_rank_score(best_seed_set, args["g_type"], args["model"], args["k"], args["spread_function"],
+											args["g_nodes"])
+		out_dict["rank_score"] = score
+		print("Ranking score: {}/{}".format(score, total))
 	out_dict["exec_time"] = exec_time
 	out_dict["best_fitness"] = best_spread
 	out_dict["best_mc_spread"] = best_mc_spread
