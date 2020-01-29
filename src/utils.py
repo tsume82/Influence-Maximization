@@ -2,6 +2,8 @@ import collections
 import networkx as nx
 import os
 import numpy as np
+import random
+import SRW_RWF_ISRW as Graph_Sampling
 
 from load import read_graph
 
@@ -191,8 +193,63 @@ def load_graph(g_file=None, g_type=None, g_nodes=None, g_new_edges=None, g_seed=
 			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
 		elif g_type == "epinions":
 			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
-
+		elif g_type == "tiny_wiki":
+			G = read_graph("../experiments/datasets/Tiny_wiki_{}nodes_seed0.txt".format(g_nodes), directed=True)
+		elif g_type == "tiny_amazon":
+			G = read_graph("../experiments/datasets/Tiny_amazon_{}nodes_seed0.txt".format(g_nodes), directed=True)
+		elif g_type == "tiny_CA-GrQc":
+			G = read_graph("../experiments/datasets/Tiny_CA-GrQc_{}nodes_seed0.txt".format(g_nodes), directed=True)
+		elif g_type == "tiny_wiki_community":
+			G = read_graph("../experiments/datasets/Tiny_wiki_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
+		elif g_type == "tiny_amazon_community":
+			G = read_graph("../experiments/datasets/Tiny_amazon_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
+		elif g_type == "tiny_CA-GrQc_community":
+			G = read_graph("../experiments/datasets/Tiny_CA-GrQc_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
 	return G
+
+
+def get_rank_score(seed_set, dataset_name, model, k, spread_function="monte_carlo", g_nodes=100):
+	"""
+	returns the ranking of the seed_set among all the seed sets in the dataset, according to its spread function
+	:param seed_set:
+	:param dataset_name:
+	:param model:
+	:param k:
+	:return: ranking position, number of all the possible sets
+	"""
+	ground_truth_name = dataset_name.replace("tiny", "Tiny")
+	ground_truth_name += "_{}nodes_seed0_{}_k{}_{}.pickle".format(g_nodes, model, k, spread_function)
+	ground_truth_name = "../experiments/ground_truth/" + ground_truth_name
+
+	import pickle
+	with open(ground_truth_name, 'rb') as handle:
+		scores = pickle.load(handle)
+	seed_set = tuple(seed_set)
+	from itertools import permutations
+	i = 0
+	seed_set_perms = list(permutations(seed_set))
+	while seed_set not in scores.keys():
+		seed_set=seed_set_perms[i]
+		i+=1
+	for k,v in scores.items():
+		if k == seed_set:
+			break
+		print("{}. seed set {} : {}".format(v[2], k, v))
+	return scores[seed_set][2], len(scores)
+
+
+def sample_graph(g_type=None, n=100, g_seed=0):
+	"""
+	samples a subgraph of g_type graph of dimension n
+	:param g_type: name of the real world dataset to sample from
+	:param n: number of nodes in the sampled graph
+	:return: networkx graph
+	"""
+	G = load_graph(g_type)
+	sampler = Graph_Sampling.SRW_RWF_ISRW()
+	prng = random.Random(g_seed)
+	G_sampled = sampler.random_walk_sampling_with_fly_back(G, n, 0.15, prng)
+	return G_sampled
 
 
 def random_nodes(G, n, prng):
