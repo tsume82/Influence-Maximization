@@ -309,7 +309,7 @@ def ea_local_neighbors_spread_mutation(prng, candidate, args):
 	if len(nodes) > 0:
 		spreads = []
 		for node in nodes:
-			spread = args["fitness_function"]( A=[node], random_generator=args["prng"])
+			spread = args["fitness_function"]( A=[node], random_generator=args["prng"])[0]
 			spreads.append(spread)
 		# print(spreads)
 		# exit(0)
