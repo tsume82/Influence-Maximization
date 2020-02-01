@@ -4,6 +4,7 @@ from node2vec import Node2Vec
 import argparse
 import random
 import numpy as np
+import utils
 
 from load import read_graph
 from utils import dict2csv
@@ -13,7 +14,7 @@ import torch
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Calculation of node2vec embeddings')
 
-	parser.add_argument('--g_nodes', type=int, default=10, help='number of nodes in the graph')
+	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=2, help='number of new edges in barabasi-albert graphs')
 	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition',
 																		'wiki', 'amazon', 'epinions',
@@ -65,34 +66,22 @@ if __name__ == "__main__":
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
 
-	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
+	parser.add_argument('--out_name', default="", help='string that will be inserted in the out file names')
+
+	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
 	args = parser.parse_args()
-	if args.g_file is not None:
-		import load
-		G = load.read_graph(args.g_file)
-	else:
-		if args.g_type == "barabasi_albert":
-			G = nx.generators.barabasi_albert_graph(args.g_nodes, args.g_new_edges, seed=args.g_seed)
-		elif args.g_type == "gaussian_random_partition":
-			G = nx.gaussian_random_partition_graph(n=args.g_nodes, s=10, v=10, p_in=0.25, p_out=0.1, seed=args.g_seed)
-		elif args.g_type == "wiki":
-			G = read_graph("../experiments/datasets/wiki-Vote.txt", directed=True)
-			args.g_nodes = len(G.nodes())
-		elif args.g_type == "amazon":
-			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
-			args.g_nodes = len(G.nodes())
-		elif args.g_type == "twitter":
-			G = read_graph("../experiments/datasets/twitter_combined.txt", directed=True)
-			args.g_nodes = len(G.nodes())
-		elif args.g_type == "facebook":
-			G = read_graph("../experiments/datasets/facebook_combined.txt", directed=False)
-			args.g_nodes = len(G.nodes())
-		elif args.g_type == "CA-GrQc":
-			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
-		elif args.g_type == "epinions":
-			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
-			args.g_nodes = len(G.nodes())
+
+	if args.config_file is not None:
+		import json
+		with open(args.config_file, "r") as f:
+			in_params = json.load(f)
+
+		ea_args = in_params["script_args"]
+
+		args.__dict__.update(ea_args)
+
+	G = utils.load_graph(g_type=args.g_type, g_nodes=args.g_nodes)
 
 	args = parser.parse_args()
 
@@ -119,7 +108,6 @@ if __name__ == "__main__":
 
 	if not os.path.exists(args.out_dir):
 		os.makedirs(args.out_dir)
-
 	# Save embeddings for later use
 	model.wv.save_word2vec_format(args.out_dir + "/" + args.out_file + args.out_name + ".emb")
 
