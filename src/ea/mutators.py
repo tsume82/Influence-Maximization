@@ -2,22 +2,103 @@ import inspyred
 import numpy as np
 
 
+def get_nodes_without_repetitions(candidate, args):
+	"""
+	removes candidate nodes from the pool of nodes
+	:param candidate:
+	:param args:
+	:return:
+	"""
+	nodes = args["_ec"].bounder.values.copy()
+	for c in candidate:
+		if c in nodes: nodes.remove(c)
+
+	return nodes
+
+
+def get_nodes_neighbours_without_repetitions(node, candidate, args):
+	"""
+	returns nodes neighbours without nodes in candidate
+	:param node:
+	:param candidate:
+	:param args:
+	:return:
+	"""
+	nodes = list(args["G"].neighbors(node))
+	# avoid nodes repetitions
+	for c in candidate:
+		if c in nodes: nodes.remove(c)
+	return nodes
+
+
+def get_node2vec_neighbors_without_repetitions(node, candidate, args):
+	"""
+	returns the most similar nodes accorting to the node2vec embeddings
+	:param node:
+	:param candidate:
+	:param args:
+	:return:
+	"""
+	nodes = args["model"].wv.most_similar(str(node))
+	nodes = [int(n[0]) for n in nodes]
+	# avoid nodes repetitions
+	for c in candidate:
+		if c in nodes: nodes.remove(c)
+	return nodes
+
+
+def approximated_spread(node, args):
+	"""
+	influence spread approximation : the spread is approximated by calculating the probability of activation of the neighbors
+	and neighbors of neighbors of the node, where neighbors of neighbors are roughly approximated
+	:param node:
+	:param args:
+	:return:
+	"""
+
+	approx_spread = 0
+	node_neighs = list(args["G"].neighbors(node))
+	# for each node neighbor calculate it's contribution
+	for node_neigh in node_neighs:
+		# very roughly approximated! may include repetitions
+		neighbors_of_neighbors = list(args["G"].neighbors(node_neigh))
+		if args["prop_model"] == "WC":
+			approx_spread += 1/args["G"].in_degree(node_neigh)
+		else:
+			approx_spread += args["p"]
+		for node_neigh_neigh in neighbors_of_neighbors:
+			if args["prop_model"] == "WC":
+				approx_spread += (1 / (args["G"].in_degree(node_neigh_neigh)))*(1/args["G"].in_degree(node_neigh))
+			else:
+				approx_spread += args["p"]**2
+	return approx_spread
+
+
+def eval_fitness(seed_set, prng, args):
+	"""
+	evaluates fitness of the seed set
+	:param seed_set:
+	:param prng:
+	:return:
+	"""
+	spread = args["fitness_function"](A=seed_set, random_generator=prng)
+	# if we are using monteCarlo simulations which returns mean and std
+	if len(spread) > 0:
+		spread = spread[0]
+	return spread
+
+
 def ea_global_random_mutation(prng, candidate, args):
-
 	"""
-	randomly mutates one gene of the individual
+	randomly mutates one gene of the individual with one random node of the graph
 	"""
-	nodes = args["_ec"].bounder.values
+	nodes = get_nodes_without_repetitions(candidate, args)
 
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
-	# avoid repetitions
-	while mutated_node in mutatedIndividual:
-		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
 
 	mutatedIndividual[gene] = mutated_node
 
@@ -28,20 +109,19 @@ def ea_local_neighbors_random_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one of it's neighbors
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
+
 	# choose among neighbours of the selected node
-	nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_nodes_neighbours_without_repetitions(mutatedIndividual[gene], candidate, args)
+
 	if len(nodes) > 0:
 		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
 		mutatedIndividual[gene] = mutated_node
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
@@ -51,16 +131,12 @@ def ea_local_neighbors_second_degree_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one of it's neighbors, but according to second degree probability
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	# choose among neighbours of the selected node
-	nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
-
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_nodes_neighbours_without_repetitions(mutatedIndividual[gene], candidate, args)
 
 	if len(nodes) > 0:
 		# calculate second degree of each of the neighbors
@@ -70,7 +146,7 @@ def ea_local_neighbors_second_degree_mutation(prng, candidate, args):
 			sec_degree += len(nodes)
 			node_neighs = list(args["G"].neighbors(node))
 			for node_neigh in node_neighs:
-				# !very roughly approximated, may include repetitions
+				# !very roughly approximated to reduce computation time, may include repetitions
 				neighbors_of_neighbors = list(args["G"].neighbors(node_neigh))
 				sec_degree += len(neighbors_of_neighbors)
 			second_degrees.append(sec_degree)
@@ -78,6 +154,7 @@ def ea_local_neighbors_second_degree_mutation(prng, candidate, args):
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 	return mutatedIndividual
 
@@ -90,24 +167,19 @@ def ea_global_low_spread(prng, candidate, args):
 	:param args:
 	:return:
 	"""
-	nodes = args["_ec"].bounder.values
-	mutatedIndividual = list(set(candidate))
+	nodes = get_nodes_without_repetitions(candidate, args)
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	probs = []
 	for node in mutatedIndividual:
-		spread = args["fitness_function"](A=[node], random_generator=prng)[0]
+		spread = eval_fitness([node], prng, args)
 		probs.append(spread)
-
 	probs = np.array(probs) / max(probs)
 	probs = 1 - probs
 
 	gene = prng.choices(range(0, len(mutatedIndividual)), probs)[0]
 	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
-	# avoid repetitions
-	while mutated_node in mutatedIndividual:
-		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
 
 	mutatedIndividual[gene] = mutated_node
 
@@ -119,11 +191,10 @@ def ea_global_low_deg_mutation(prng, candidate, args):
 	the probability to select the gene to mutate depends on its degree
 	"""
 
-	nodes = args["_ec"].bounder.values
+	nodes = get_nodes_without_repetitions(candidate, args)
+	mutatedIndividual = candidate
 
-	mutatedIndividual = list(set(candidate))
-
-	# choose random place
+	# choose random gene
 	probs = []
 	for node in mutatedIndividual:
 		probs.append(args["G"].out_degree(node))
@@ -134,15 +205,11 @@ def ea_global_low_deg_mutation(prng, candidate, args):
 	gene = prng.choices(range(0, len(mutatedIndividual)), probs)[0]
 	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
 
-	# avoid repetitions
-	while mutated_node in mutatedIndividual:
-		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
 	mutatedIndividual[gene] = mutated_node
 
 	return mutatedIndividual
 
-
+#TODO: non serve più??
 # @inspyred.ec.variators.mutator
 def ea_global_local_alteration(prng, candidate, args):
 	"""
@@ -166,42 +233,30 @@ def ea_global_local_alteration(prng, candidate, args):
 
 def ea_local_approx_spread_mutation(prng, candidate, args):
 	"""
-	selects among neighbours neighbor with maximum approximated degree
+	selects a neighbor accorting to the maximum approximated spread probability
 	:param prng:
 	:param candidate:
 	:param args:
 	:return:
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	# choose among neighbours of the selected node
-	nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
-
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_nodes_neighbours_without_repetitions(mutatedIndividual[gene], candidate, args)
 
 	if len(nodes) > 0:
 		# calculate second degree of each of the neighbors
 		approx_spreads = []
 		for node in nodes:
-			approx_spread = 0
-			node_neighs = list(args["G"].neighbors(node))
-			for node_neigh in node_neighs:
-				# !very roughly approximated, may include repetitions
-				neighbors_of_neighbors = list(args["G"].neighbors(node_neigh))
-				for node_neigh_neigh in neighbors_of_neighbors:
-					if args["prop_model"]=="WC":
-						approx_spread += 1/(args["G"].in_degree(node_neigh_neigh))
-					else:
-						approx_spread += args["p"]
+			approx_spread = approximated_spread(node, args)
 			approx_spreads.append(approx_spread)
 		probs = np.array(approx_spreads) / max(approx_spreads)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 	return mutatedIndividual
 
@@ -210,20 +265,16 @@ def ea_local_embeddings_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one of it's nearest nodes according to their embeddings
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 
-	# choose among the most similar nodes according to the embedding
-	nodes = args["model"].wv.most_similar(str(mutatedIndividual[gene]))
-	nodes = [int(n[0]) for n in nodes]
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_node2vec_neighbors_without_repetitions(mutatedIndividual[gene], candidate, args)
 	if len(nodes) > 0:
 		mutatedIndividual[gene] = nodes[prng.randint(0, len(nodes) - 1)]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
@@ -232,26 +283,25 @@ def ea_local_embeddings_mutation(prng, candidate, args):
 def ea_global_subpopulation_mutation(prng, candidate, args):
 
 	"""
-	randomly mutates one gene of the individual
+	randomly mutates one gene of the individual with one of the nodes from the subpopulation assigned to that gene
 	"""
-	# nodes = args["_ec"].bounder.values
 
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	nodes = list(args["voronoi_cells"][list(args["voronoi_cells"].keys())[gene]])
-	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
+	nodes = nodes.copy()
 	# avoid repetitions
-	while mutated_node in mutatedIndividual:
-		mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
+	for c in candidate:
+		if c in nodes: nodes.remove(c)
+	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
 
 	mutatedIndividual[gene] = mutated_node
 
 	return mutatedIndividual
 
-
+#TODO: vederee se potrebbe essere l'if in fondo
 @inspyred.ec.variators.mutator
 def ea_adaptive_mutators_alteration(prng, candidate, args):
 	"""
@@ -262,8 +312,6 @@ def ea_adaptive_mutators_alteration(prng, candidate, args):
 	:param args:
 	:return:
 	"""
-	# for i, individual in enumerate(args["_ec"].population):
-	# 	if set(individual.candidate) == set(candidate):
 	if tuple(set(candidate)) not in args["offspring_fitness"].keys():
 		old_fitness=args["fitness_function"](A=candidate, random_generator=prng)[0]
 		args["offspring_fitness"][tuple(set(candidate))]=old_fitness
@@ -284,102 +332,85 @@ def ea_adaptive_mutators_alteration(prng, candidate, args):
 	# if improvement > 0:
 	return mutatedIndividual
 	# return candidate
-# ----------------------------
 
 
 def ea_local_neighbors_spread_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one of it's neighbors, which is chosen according to their
-	two hop spread probability
+	spread probability
 	:param prng:
 	:param candidate:
 	:param args:
 	:return:
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
-	# choose among neighbours of the selected node
-	nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
+	nodes = get_nodes_neighbours_without_repetitions(mutatedIndividual[gene], candidate, args)
 
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
 	if len(nodes) > 0:
 		spreads = []
 		for node in nodes:
-			spread = args["fitness_function"]( A=[node], random_generator=args["prng"])[0]
+			spread = eval_fitness([node], prng, args)
 			spreads.append(spread)
-		# print(spreads)
-		# exit(0)
 		probs = np.array(spreads) / max(spreads)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 	return mutatedIndividual
 
 
 def ea_local_additional_spread_mutation(prng, candidate, args):
 	"""
-
+	randomly mutates one gene of the individual with one of it's neighbors, which is chosen according to their additional
+	spread probability
 	:param prng:
 	:param candidate:
 	:param args:
 	:return:
 	"""
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
-	# choose among neighbours of the selected node
-	nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
 
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_nodes_neighbours_without_repetitions(mutatedIndividual[gene], candidate, args)
 	if len(nodes) > 0:
 		spreads = []
-
+		# get the seed set without the selected node
 		mutatedIndividual_without = mutatedIndividual.copy()
 		mutatedIndividual_without.remove(mutatedIndividual[gene])
-		spread_without = args["fitness_function"](A=mutatedIndividual_without, random_generator=prng)[0]
+		# calculate its fitness function
+		spread_without = eval_fitness(mutatedIndividual_without, prng, args)
+		# for each neighbor, calculate the spread increase it would generate
 		for node in nodes:
 			mutatedIndividual_with = mutatedIndividual_without.copy()
 			mutatedIndividual_with.append(node)
-			spread_with = args["fitness_function"](A=mutatedIndividual_with, random_generator=prng)[0]
+			spread_with = eval_fitness(mutatedIndividual_with, prng, args)
 			additional_spread = spread_with - spread_without
 			spreads.append(additional_spread)
-		# print(spreads)
-		# exit(0)
 		probs = np.array(spreads) / max(spreads)
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 	return mutatedIndividual
 
 
 def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 	"""
-	randomly mutates one gene of the individual with one of it's neighbors, but according to second degree probability
+	randomly mutates one gene of the individual with one of it's neighbors, but according to the second degree probability
 	"""
-	#TODO calcolare le probabilità corrispondenti alla two hop spread del nodo, oppure alla somma di probabilità
-	# di propagazione al posto delle degrees
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
-	# choose among neighbours of the selected node
-	# nodes = list(args["G"].neighbors(mutatedIndividual[gene]))
 
-	# choose among the most similar nodes according to the embedding
-	nodes = args["model"].wv.most_similar(str(mutatedIndividual[gene]))
-	nodes = [int(n[0]) for n in nodes]
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
+	nodes = get_node2vec_neighbors_without_repetitions(mutatedIndividual[gene], candidate, args)
 	if len(nodes) > 0:
 		# calculate second degree of each of the neighbors
 		second_degrees = []
@@ -395,6 +426,7 @@ def ea_local_neighbors_second_degree_mutation_emb(prng, candidate, args):
 		idx = prng.choices(range(0, len(nodes)), probs)[0]
 		mutatedIndividual[gene] = nodes[idx]
 	else:
+		# if we don't have neighbors to choose from, global mutation
 		mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
@@ -409,20 +441,16 @@ def ea_global_low_additional_spread(prng, candidate, args):
 	:param args:
 	:return:
 	"""
-	nodes = args["nodes"].copy()
-	# avoid nodes repetitions
-	for c in candidate:
-		if c in nodes: nodes.remove(c)
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
+	nodes = get_nodes_without_repetitions(candidate, args)
+	spread_individual = eval_fitness(mutatedIndividual, prng, args)
 
-	spread_individual = args["fitness_function"](A=mutatedIndividual, random_generator=prng)[0]
-	# choose random place
 	probs = []
 	for node in mutatedIndividual:
 		mutatedIndividual_without = mutatedIndividual.copy()
 		mutatedIndividual_without.remove(node)
 
-		spread_without = args["fitness_function"](A=mutatedIndividual_without, random_generator=prng)[0]
+		spread_without = eval_fitness(mutatedIndividual_without, prng, args)
 		additional_spread = spread_individual - spread_without
 		probs.append(additional_spread)
 
@@ -440,8 +468,7 @@ def ea_differential_evolution_mutation(prng, candidate, args):
 	differential evolution mutation: x = x + (a - b)
 	"""
 	# pick two random individuals a and b
-
-	population = args["population"].copy()
+	population = args["_ec"].population
 	population = [p.candidate for p in population]
 	if candidate in population: population.remove(candidate)
 
@@ -458,21 +485,18 @@ def ea_differential_evolution_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 
-# @inspyred.ec.variators.mutator
 def ea_global_activation_mutation(prng, candidate, args):
-
 	"""
-	randomly mutates one gene of the individual
+	mutates one gene of the individual with one random node, which was both never activated by one of the candidate nodes
+	and it never activated none of the candidate nodes
 	"""
-	nodes = args["_ec"].bounder.values.copy()
 
-	mutatedIndividual = list(set(candidate))
+	mutatedIndividual = candidate
+	nodes = get_nodes_without_repetitions(candidate, args)
 
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
-	# old_node = candidate[gene]
 
 	# avoid repetitions
 	ok = False
@@ -486,53 +510,37 @@ def ea_global_activation_mutation(prng, candidate, args):
 			if mutated_node in G_nodes[node]["activated_by"].keys():
 				ok = False
 
-	# avoid nodes by which the node was activated
-	# avoid nodes which have been activated by the mutation node
-
 	mutatedIndividual[gene] = mutated_node
-
 
 	return mutatedIndividual
 
 
-# @inspyred.ec.variators.mutator
 def ea_local_activation_mutation(prng, candidate, args):
-
 	"""
-	randomly mutates one gene of the individual
+	mutates the gene with the node by which it was activated the biggest amount of times
 	"""
-	nodes = args["_ec"].bounder.values.copy()
-	probabilities = [1]*len(nodes)
+	mutatedIndividual = candidate
 
-	mutatedIndividual = list(set(candidate))
-
-	# choose random place
+	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 
 	old_node = candidate[gene]
 	G_nodes = args["G"].nodes
-	if len(G_nodes[old_node]["activated_by"])>0:
+	if len(G_nodes[old_node]["activated_by"]) > 0:
 		nodes = list(G_nodes[old_node]["activated_by"].keys())
-		probabilities = list(G_nodes[old_node]["activated_by"].values())
+		for c in candidate:
+			if c in nodes: nodes.remove(c)
+		if len(nodes)>0:
+			probabilities = list(G_nodes[old_node]["activated_by"].values())
+			probabilities = np.array(probabilities)
+			probabilities[np.argmax(probabilities)] *= 10
+			mutated_node = prng.choices(nodes, probabilities)[0]
 
-	probabilities = np.array(probabilities)
-	probabilities[np.argmax(probabilities)] *=10
+			mutatedIndividual[gene] = mutated_node
+			return mutatedIndividual
 
-	mutated_node = prng.choices(nodes, probabilities)[0]
-	# mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
-	trials = args["k"]
-	# avoid repetitions
-	while mutated_node in mutatedIndividual and trials > 0:
-		mutated_node = prng.choices(nodes, probabilities)[0]
-		trials -= 1
-	if trials == 0:
-		# random mutation
-		nodes = args["_ec"].bounder.values.copy()
-		while mutated_node in mutatedIndividual:
-			mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
-
-	mutatedIndividual[gene] = mutated_node
+	# if we don't have activation nodes to choose from, global mutation
+	mutatedIndividual = ea_global_random_mutation(prng, candidate, args)
 
 	return mutatedIndividual
 
