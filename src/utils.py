@@ -231,10 +231,12 @@ def get_rank_score(seed_set, dataset_name, model, k, spread_function="monte_carl
 	while seed_set not in scores.keys():
 		seed_set=seed_set_perms[i]
 		i+=1
-	for k,v in scores.items():
-		if k == seed_set:
-			break
-		print("{}. seed set {} : {}".format(v[2], k, v))
+
+	# uncomment this if you want to display all the previous scores
+	# for k,v in scores.items():
+	# 	if k == seed_set:
+	# 		break
+	# 	print("{}. seed set {} : {}".format(v[2], k, v))
 	return scores[seed_set][2], len(scores)
 
 
