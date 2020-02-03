@@ -22,6 +22,7 @@ def ea_observer1(population, num_generations, num_evaluations, args):
 			raise NameError("Nodes repetition inside an individual")
 	# reset offspring fitnesses
 	args["offspring_fitness"] = {}
+	args["mab"].exploration_weight = 1/(num_generations+1)**(1.5)
 	return
 
 
