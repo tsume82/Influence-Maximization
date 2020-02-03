@@ -88,6 +88,7 @@ def eval_fitness(seed_set, prng, args):
 	return spread
 
 
+# @inspyred.ec.variators.mutator
 def ea_global_random_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one random node of the graph
@@ -210,7 +211,7 @@ def ea_global_low_deg_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 #TODO: non serve più??
-# @inspyred.ec.variators.mutator
+@inspyred.ec.variators.mutator
 def ea_global_local_alteration(prng, candidate, args):
 	"""
 	this method calls with certain probability global and local mutations, those must be specified in args as
@@ -302,7 +303,7 @@ def ea_global_subpopulation_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 #TODO: vederee se potrebbe essere l'if in fondo
-@inspyred.ec.variators.mutator
+# @inspyred.ec.variators.mutator
 def ea_adaptive_mutators_alteration(prng, candidate, args):
 	"""
 	this method calls with certain probability global and local mutations, those must be specified in args as
@@ -530,8 +531,12 @@ def ea_local_activation_mutation(prng, candidate, args):
 		nodes = list(G_nodes[old_node]["activated_by"].keys())
 		for c in candidate:
 			if c in nodes: nodes.remove(c)
-		if len(nodes)>0:
-			probabilities = list(G_nodes[old_node]["activated_by"].values())
+		if len(nodes) > 0:
+			# update the probabilities
+			probabilities = []
+			for node in nodes:
+				probabilities.append(G_nodes[old_node]["activated_by"][node])
+			# probabilities = list(G_nodes[old_node]["activated_by"].values())
 			probabilities = np.array(probabilities)
 			probabilities[np.argmax(probabilities)] *= 10
 			mutated_node = prng.choices(nodes, probabilities)[0]
