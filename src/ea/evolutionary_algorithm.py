@@ -1,6 +1,8 @@
 import inspyred
 import networkx as nx
 
+from heapq import nlargest
+
 from ea.mutators import ea_global_local_alteration
 from ea.crossovers import ea_one_point_crossover
 from ea.observers import ea_observer1, ea_observer2
@@ -10,6 +12,7 @@ import ea.mutators as mutators
 # from ea.generators import subpopulation_generator as generator
 from ea.replacers import ea_replacer
 from multi_armed_bandit import Multi_armed_bandit
+from spread.monte_carlo_max_hop import MonteCarlo_simulation as mc
 
 
 #TODO: remove from here?
@@ -25,6 +28,18 @@ def filter_nodes(G, min_degree):
 		for node in nodes:
 			if G.out_degree(node) < min_degree:
 				nodes.remove(node)
+
+	return nodes
+
+
+def filter_max_spread(G, prng, best_percentage=0.001):
+	nodes = list(G.nodes())
+	spreads = {}
+	for n in nodes:
+		i = mc(G=G, A=[n], p=0.01, model="WC", max_hop=3, random_generator=prng, no_simulations=5)
+		spreads[n] = i[0]
+	# select best percentage
+	nodes = nlargest(int(len(G)*best_percentage), spreads, key=spreads.get)
 
 	return nodes
 
@@ -59,7 +74,7 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  global_mutation_operator=None,
 							  adaptive_local_rate=True, mutators_to_alterate=[],
 							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01,
-							  exploration_weight=1, moving_avg_len=100):
+							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -99,7 +114,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	# --------------------------------------------------------------------------- #
 
-	nodes = filter_nodes(G, min_degree)
+	# nodes = filter_nodes(G, min_degree)
+	nodes = filter_max_spread(G, prng, best_nodes_percentage)
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
