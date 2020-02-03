@@ -8,7 +8,8 @@ def generator(random, args):
 	:return:
 	"""
 	#TODO: sostituire pool di nodi da bounder, dove i nodi nel caso vengono filtrati
-	return random.sample(args["G"].nodes(), args["k"])
+	# return random.sample(args["G"].nodes(), args["k"])
+	return random.sample(args["nodes"], args["k"])
 
 
 def subpopulation_generator(random, args):
