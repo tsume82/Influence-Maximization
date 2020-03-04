@@ -3,7 +3,12 @@ import networkx as nx
 import os
 import numpy as np
 import random
+import argparse
 import SRW_RWF_ISRW as Graph_Sampling
+import operator as op
+from functools import reduce
+import math
+
 
 from load import read_graph
 
@@ -23,6 +28,17 @@ def args2cmd(args, exec_name, hpc=False):
 		out += " "
 		out += "--{}={}".format(k, v)
 	return out
+
+
+def str2bool(v):
+	if isinstance(v, bool):
+		return v
+	if v.lower() in ('yes', 'true', 'True', 't', 'y', '1'):
+		return True
+	elif v.lower() in ('no', 'false', 'False', 'f', 'n', '0'):
+		return False
+	else:
+		raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
 def config_file2cmd(config_file_name, out_dir, exec_name, hpc=False):
@@ -229,8 +245,8 @@ def get_rank_score(seed_set, dataset_name, model, k, spread_function="monte_carl
 	i = 0
 	seed_set_perms = list(permutations(seed_set))
 	while seed_set not in scores.keys():
-		seed_set=seed_set_perms[i]
-		i+=1
+		seed_set = seed_set_perms[i]
+		i += 1
 
 	# uncomment this if you want to display all the previous scores
 	# for k,v in scores.items():
@@ -238,6 +254,28 @@ def get_rank_score(seed_set, dataset_name, model, k, spread_function="monte_carl
 	# 		break
 	# 	print("{}. seed set {} : {}".format(v[2], k, v))
 	return scores[seed_set][2], len(scores)
+
+
+def get_best_fitness(dataset_name, model, k, spread_function="monte_carlo", g_nodes=100):
+	"""
+	returns fitness of the best individual
+	:param dataset_name:
+	:param model:
+	:param k:
+	:param spread_function:
+	:param g_nodes:
+	:return:
+	"""
+	ground_truth_name = dataset_name.replace("tiny", "Tiny")
+	ground_truth_name += "_{}nodes_seed0_{}_k{}_{}.pickle".format(g_nodes, model, k, spread_function)
+	ground_truth_name = "../experiments/ground_truth/" + ground_truth_name
+
+	import pickle
+	with open(ground_truth_name, 'rb') as handle:
+		scores = pickle.load(handle)
+	best_result = scores[list(scores.keys())[0]]
+	best_spread = best_result[0]
+	return best_spread
 
 
 def sample_graph(g_type=None, n=100, g_seed=0):
@@ -311,8 +349,40 @@ def individuals_diversity(population):
 
 	return len(set(tuple(row) for row in pop)) / len(pop)
 
+
+def ncr(n, r):
+	"""
+	number of combinations
+	taken from stackoverflow
+	:param n: population size
+	:param r: sample size
+	:return:
+	"""
+	r = min(r, n-r)
+	numer = reduce(op.mul, range(n, n-r, -1), 1)
+	denom = reduce(op.mul, range(1, r+1), 1)
+	return numer / denom
+
+
+def inverse_ncr(combinations, r):
+	"""
+	"inverse" ncr function, given r and ncr, returns n
+	:param ncr:
+	:param r:
+	:return:
+	"""
+	n = 1
+	ncr_n = ncr(n, r)
+	while ncr_n < combinations:
+		n += 1
+		ncr_n = ncr(n, r)
+	return n
+
 # G = nx.generators.random_graphs.barabasi_albert_graph(5, 3, seed=0)
 # G_w = add_weights_WC(G)
 # print(dict(G_w.adjacency()))
 #
 # print(G_w[0][4]["weight"])
+
+# if __name__=="__main__":
+# 	get_best_score("tiny_wiki_community", "WC", 2)
