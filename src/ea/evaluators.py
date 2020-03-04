@@ -49,12 +49,12 @@ def one_process_evaluator(candidates, args):
 
 	for candidate in candidates:
 		# fit = evaluate(args["G"], candidate, args["p"], args["no_simulations"], args["model"])
-		if tuple(set(candidate)) in args["offspring_fitness"].keys():
-			fit = args["offspring_fitness"][tuple(set(candidate))]
+		# if tuple(set(candidate)) in args["offspring_fitness"].keys():
+		# 	fit = args["offspring_fitness"][tuple(set(candidate))]
+		# else:
+		if args["fitness_function"].func.__name__ != "two_hop_spread":
+			fit = args["fitness_function"](A=candidate)[0]
 		else:
-			if args["fitness_function"].func.__name__ != "two_hop_spread":
-				fit = args["fitness_function"](A=candidate, random_generator=args["prng"])[0]
-			else:
-				fit = args["fitness_function"](A=candidate)
+			fit = args["fitness_function"](A=candidate)
 		fitness.append(fit)
 	return fitness
