@@ -9,7 +9,7 @@ import os
 import json
 import subprocess
 
-from utils import args2cmd, config_file2cmd
+from utils import args2cmd, config_file2cmd, str2bool
 
 
 def current_commit_revision():
@@ -22,7 +22,7 @@ def current_commit_revision():
 	return git_revision_sha1_short.decode("utf-8")
 
 
-def run_experiment(in_file, out_dir, hpc=False):
+def run_experiment(in_file, out_dir, hpc=False, explicit_params = False):
 	"""
 	runs experiment according to in_file parameters
 	:param in_file: json file containing fields 'script' with the script name,
@@ -46,8 +46,10 @@ def run_experiment(in_file, out_dir, hpc=False):
 			data["script_args"]["out_dir"] = out_dir_arg
 			if not os.path.exists(out_dir_arg):
 				os.makedirs(out_dir_arg)
-		# cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
-		cmd = config_file2cmd(config_file_name=in_file, out_dir=out_dir_arg, exec_name=data["script"], hpc=hpc)
+		if explicit_params:
+			cmd = args2cmd(args=data["script_args"], exec_name=data["script"], hpc=hpc)
+		else:
+			cmd = config_file2cmd(config_file_name=in_file, out_dir=out_dir_arg, exec_name=data["script"], hpc=hpc)
 		already_done = False
 		# ! important assumption: at the end of the execution computation script will produce log file containing
 		#  string "log" in its name
@@ -64,6 +66,11 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Experiments run')
 	parser.add_argument('--exp_dir', help="experiment directory")
 	parser.add_argument('--hpc', default=False)
+
+	parser.add_argument("--explicit_parameters", type=str2bool, nargs='?',
+						const=True, default=False,
+						help="set to true if you want each parameter in your json file to be passed "
+							 "as script argument")
 
 	args = parser.parse_args()
 
@@ -104,4 +111,5 @@ if __name__ == "__main__":
 				print("-------------------------------")
 				print("Experiment {}/{}".format(n_exp, tot_experiments))
 				print("Experiment config file: {}".format(sub_dir + "/" + file))
-				run_experiment(sub_dir + "/" + file, out_sub_dir + "/" + file.replace(".json", ""), hpc=args.hpc)
+				run_experiment(sub_dir + "/" + file, out_sub_dir + "/" + file.replace(".json", ""), hpc=args.hpc,
+							   explicit_params=args.explicit_parameters)
