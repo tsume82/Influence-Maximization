@@ -10,9 +10,9 @@ def get_nodes_without_repetitions(candidate, args):
 	:return:
 	"""
 	nodes = args["_ec"].bounder.values.copy()
+
 	for c in candidate:
 		if c in nodes: nodes.remove(c)
-
 	return nodes
 
 
@@ -95,14 +95,12 @@ def ea_global_random_mutation(prng, candidate, args):
 	"""
 	nodes = get_nodes_without_repetitions(candidate, args)
 
-	mutatedIndividual = candidate
-
+	mutatedIndividual = candidate.copy()
 	# choose random gene
 	gene = prng.randint(0, len(mutatedIndividual) - 1)
 	mutated_node = nodes[prng.randint(0, len(nodes) - 1)]
 
 	mutatedIndividual[gene] = mutated_node
-
 	return mutatedIndividual
 
 
@@ -303,7 +301,7 @@ def ea_global_subpopulation_mutation(prng, candidate, args):
 	return mutatedIndividual
 
 #TODO: vederee se potrebbe essere l'if in fondo
-# @inspyred.ec.variators.mutator
+@inspyred.ec.variators.mutator
 def ea_adaptive_mutators_alteration(prng, candidate, args):
 	"""
 	this method calls with certain probability global and local mutations, those must be specified in args as
