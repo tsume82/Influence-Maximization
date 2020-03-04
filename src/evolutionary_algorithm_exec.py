@@ -99,13 +99,14 @@ def read_arguments():
 	parser.add_argument('--p', type=float, default=0.01, help='probability of influence spread in IC model')
 	parser.add_argument('--spread_function', default="monte_carlo_max_hop",
 						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
-	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
+	parser.add_argument('--no_simulations', type=int, default=10
+						, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
-	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
-	parser.add_argument('--population_size', type=int, default=100, help='population size of the ea')
-	parser.add_argument('--offspring_size', type=int, default=100, help='offspring size of the ea')
-	parser.add_argument('--random_seed', type=int, default=43, help='seed to initialize the pseudo-random number '
+	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--population_size', type=int, default=2, help='population size of the ea')
+	parser.add_argument('--offspring_size', type=int, default=2, help='offspring size of the ea')
+	parser.add_argument('--random_seed', type=int, default=40, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=100, help='maximum generations')
 
@@ -116,10 +117,10 @@ def read_arguments():
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
 	parser.add_argument('--g_type', default='amazon',
 						choices=['barabasi_albert', 'gaussian_random_partition',
-								 'wiki', 'amazon', 'epinions',
-								 'twitter', 'facebook', 'CA-GrQc', "tiny_wiki",
-								 "tiny_amazon", "tiny_CA-GrQc", "tiny_wiki_community",
-								 "tiny_amazon_community", "tiny_CA-GrQc_community"],
+								'wiki', 'amazon', 'epinions',
+								'twitter', 'facebook', 'CA-GrQc', "tiny_wiki",
+								"tiny_amazon", "tiny_CA-GrQc", "tiny_wiki_community",
+								"tiny_amazon_community", "tiny_CA-GrQc_community"],
 						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
@@ -149,8 +150,8 @@ def read_arguments():
 	parser.add_argument('--smart_initialization_percentage', type=float, default=0.7,
 						help='percentage of "smart" initial population')
 
-	parser.add_argument('--crossover_rate', type=float, default=0.1, help='evolutionary algorithm crossover rate')
-	parser.add_argument('--mutation_rate', type=float, default=0.9, help='evolutionary algorithm mutation rate')
+	parser.add_argument('--crossover_rate', type=float, default=1.0, help='evolutionary algorithm crossover rate')
+	parser.add_argument('--mutation_rate', type=float, default=0.1, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=5, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
 	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
@@ -174,17 +175,17 @@ def read_arguments():
 								 "ea_global_low_spread", "ea_global_low_additional_spread",
 								 "ea_global_subpopulation_mutation"], help='global search mutation operator')
 	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=["ea_local_activation_mutation",
-																				'ea_local_neighbors_second_degree_mutation',
-																				"ea_local_neighbors_second_degree_mutation_emb",
-																				"ea_local_embeddings_mutation",
-																				"ea_local_neighbors_random_mutation",
-																				"ea_local_neighbors_spread_mutation",
-																				"ea_local_additional_spread_mutation",
-																				"ea_local_approx_spread_mutation",
-																				"ea_global_activation_mutation",
-																				"ea_global_low_deg_mutation",
+																				#'ea_local_neighbors_second_degree_mutation',
+																				#"ea_local_neighbors_second_degree_mutation_emb",
+																				#"ea_local_embeddings_mutation",
+																				#"ea_local_neighbors_random_mutation",
+																				#"ea_local_neighbors_spread_mutation",
+																				# "ea_local_additional_spread_mutation",
+																				#"ea_local_approx_spread_mutation",
+																				#"ea_global_activation_mutation",
+																				# "ea_global_low_deg_mutation",
 																				"ea_global_random_mutation",
-																				# "ea_global_low_spread",
+																				"ea_global_low_spread",
 																				# "ea_global_low_additional_spread"
 																				],
 						help='list of mutation methods to alterate')
@@ -193,15 +194,16 @@ def read_arguments():
 						const=True, default=False,
 						help="ee.")
 	parser.add_argument("--adaptive_mutations", type=str2bool, nargs='?',
-						const=True, default=False,
+						const=True, default=True,
 						help="set to true to use adaptive mutation operator")
-	parser.add_argument("--exploration_weight", type=float, default=0.2,
+	parser.add_argument("--exploration_weight", type=float, default=0.01,
 						help="exploration weight for multi-armed bandit problem")
-	parser.add_argument("--moving_avg_len", type=int, default=100,
+	parser.add_argument("--moving_avg_len", type=int, default=10,
 						help="moving average length for multi-argmed bandit problem")
-	parser.add_argument("--best_nodes_percentage", type=float, default=0.01, help="the percentage of nodes with best spread "
+	parser.add_argument("--best_nodes_percentage", type=float, default=0.005, help="the percentage of nodes with best spread "
 																				  "used to build solutions")
-
+	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=True)
+	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
 	args = parser.parse_args()
@@ -261,16 +263,16 @@ def create_out_dir(args):
 	return population_file, generations_file, log_file
 
 
-def initialize_fitness_function(G, args):
+def initialize_fitness_function(G, args, prng):
 	"""
 	fitness function smart initialization
 	"""
 	if args["spread_function"] is None or args["spread_function"] == "monte_carlo":
 		spread_function = partial(monte_carlo, no_simulations=args["no_simulations"], p=args["p"], model=args["model"],
-								  G=G)
+								  G=G, random_generator = prng)
 	elif args["spread_function"] == "monte_carlo_max_hop":
 		spread_function = partial(monte_carlo_max_hop, no_simulations=args["no_simulations"], p=args["p"],
-								  model=args["model"], G=G, max_hop=args["max_hop"])
+								  model=args["model"], G=G, max_hop=args["max_hop"], random_generator = prng)
 	elif args["spread_function"] == "two_hop":
 		spread_function = partial(two_hop, G=G, p=args["p"], model=args["model"])
 
@@ -334,12 +336,12 @@ if __name__ == "__main__":
 			init_dict[n] = {}
 		nx.set_node_attributes(G, init_dict, name="activated_by")
 
-	fitness_function = initialize_fitness_function(G, args)
+	fitness_function = initialize_fitness_function(G, args, prng)
 
 	population_file, generations_file, log_file = create_out_dir(args)
 	initial_population = create_initial_population(G, args, prng)
 
-	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/amazon/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
+	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/wiki/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
 	# node2vec_model = initialize_node2vec_model(node2vec_file)
 
@@ -375,7 +377,10 @@ if __name__ == "__main__":
 														   p=args["p"],
 														   exploration_weight=args["exploration_weight"],
 														   moving_avg_len=args["moving_avg_len"],
-														   best_nodes_percentage = args["best_nodes_percentage"])
+														   best_nodes_percentage = args["best_nodes_percentage"],
+														   filter_best_spread_nodes = args["filter_best_spread_nodes"],
+														   dynamic_population = args["dynamic_population"],
+														   adaptive_mutations = args["adaptive_mutations"])
 
 	individuals_file.close()
 	generations_file.close()
@@ -386,7 +391,7 @@ if __name__ == "__main__":
 	print("Spread: ", best_spread)
 
 	# best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
-	best_mc_spread, _ = monte_carlo(G, best_seed_set, args["p"], args["no_simulations"], args["model"], prng)
+	best_mc_spread, _ = monte_carlo(G, best_seed_set, args["p"], 100, args["model"], prng)
 	print("Best monte carlo spread: ", best_mc_spread)
 
 	# write experiment log
@@ -395,9 +400,11 @@ if __name__ == "__main__":
 	# if the dataset is one of the tiny datasets, save the ranking archieved
 	if "tiny" in out_dict["g_type"]:
 		score, total = utils.get_rank_score(best_seed_set, args["g_type"], args["model"], args["k"],
-											args["spread_function"],
+											"monte_carlo",
 											args["g_nodes"])
 		out_dict["rank_score"] = score
+		out_dict["total_combinations"] = total
+		out_dict["relative_score"] = score/total
 		print("Ranking score: {}/{}".format(score, total))
 	out_dict["exec_time"] = exec_time
 	out_dict["best_fitness"] = best_spread
