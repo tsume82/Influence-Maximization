@@ -30,7 +30,7 @@ from smart_initialization import max_centrality_individual, Community_initializa
 from utils import load_graph, dict2csv
 
 
-def create_initial_population(G, args, prng=None):
+def create_initial_population(G, args, prng=None, nodes=None):
 	"""
 	smart initialization techniques
 	"""
@@ -62,7 +62,7 @@ def create_initial_population(G, args, prng=None):
 	elif "degree_random" == args["smart_initialization"]:
 		initial_population = degree_random(args["k"], G,
 										   int(args["population_size"] * args["smart_initialization_percentage"]),
-										   prng)
+										   prng, nodes=nodes)
 	elif "degree_random_ranked" == args["smart_initialization"]:
 		initial_population = degree_random(args["k"], G,
 										   int(args["population_size"] * args["smart_initialization_percentage"]),
@@ -99,14 +99,14 @@ def read_arguments():
 	parser.add_argument('--p', type=float, default=0.01, help='probability of influence spread in IC model')
 	parser.add_argument('--spread_function', default="monte_carlo_max_hop",
 						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
-	parser.add_argument('--no_simulations', type=int, default=10
+	parser.add_argument('--no_simulations', type=int, default=100
 						, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
-	parser.add_argument('--model', default="IC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
 	parser.add_argument('--population_size', type=int, default=2, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=2, help='offspring size of the ea')
-	parser.add_argument('--random_seed', type=int, default=40, help='seed to initialize the pseudo-random number '
+	parser.add_argument('--random_seed', type=int, default=0, help='seed to initialize the pseudo-random number '
 																	'generation')
 	parser.add_argument('--max_generations', type=int, default=100, help='maximum generations')
 
@@ -115,7 +115,7 @@ def read_arguments():
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
-	parser.add_argument('--g_type', default='amazon',
+	parser.add_argument('--g_type', default='wiki',
 						choices=['barabasi_albert', 'gaussian_random_partition',
 								'wiki', 'amazon', 'epinions',
 								'twitter', 'facebook', 'CA-GrQc', "tiny_wiki",
@@ -132,7 +132,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="degree_random", choices=["none", "degree", "eigenvector", "katz",
 																		   "closeness", "betweenness",
 																		   "community", "community_degree",
 																		   "community_degree_spectral", "degree_random",
@@ -182,10 +182,10 @@ def read_arguments():
 																				#"ea_local_neighbors_spread_mutation",
 																				# "ea_local_additional_spread_mutation",
 																				#"ea_local_approx_spread_mutation",
-																				#"ea_global_activation_mutation",
-																				# "ea_global_low_deg_mutation",
+																				# "ea_global_activation_mutation",
+																				"ea_global_low_deg_mutation",
 																				"ea_global_random_mutation",
-																				"ea_global_low_spread",
+																				# "ea_global_low_spread",
 																				# "ea_global_low_additional_spread"
 																				],
 						help='list of mutation methods to alterate')
@@ -339,8 +339,8 @@ if __name__ == "__main__":
 	fitness_function = initialize_fitness_function(G, args, prng)
 
 	population_file, generations_file, log_file = create_out_dir(args)
-	initial_population = create_initial_population(G, args, prng)
-
+	# initial_population = create_initial_population(G, args, prng)
+	initial_population = None
 	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/wiki/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
 	# node2vec_model = initialize_node2vec_model(node2vec_file)
@@ -380,7 +380,8 @@ if __name__ == "__main__":
 														   best_nodes_percentage = args["best_nodes_percentage"],
 														   filter_best_spread_nodes = args["filter_best_spread_nodes"],
 														   dynamic_population = args["dynamic_population"],
-														   adaptive_mutations = args["adaptive_mutations"])
+														   adaptive_mutations = args["adaptive_mutations"],
+														   smart_initialization=args["smart_initialization"])
 
 	individuals_file.close()
 	generations_file.close()
