@@ -11,19 +11,24 @@ from ea.generators import generator, subpopulation_generator
 import ea.mutators as mutators
 # from ea.generators import subpopulation_generator as generator
 from ea.replacers import ea_replacer
+from ea.terminators import generation_termination
 from multi_armed_bandit import Multi_armed_bandit
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as mc
+from select_best_spread_nodes import filter_best_nodes
+from functools import partial
+from utils import inverse_ncr
 
 
 #TODO: remove from here?
-def filter_nodes(G, min_degree):
+def filter_nodes(G, min_degree, nodes=None):
 	"""
 	selects nodes with degree at least high as min_degree
 	:param G:
 	:param min_degree:
 	:return:
 	"""
-	nodes = list(G.nodes())
+	if nodes is None:
+		nodes = list(G.nodes())
 	if min_degree > 0:
 		for node in nodes:
 			if G.out_degree(node) < min_degree:
@@ -40,7 +45,6 @@ def filter_max_spread(G, prng, best_percentage=0.001):
 		spreads[n] = i[0]
 	# select best percentage
 	nodes = nlargest(int(len(G)*best_percentage), spreads, key=spreads.get)
-
 	return nodes
 
 
@@ -61,7 +65,6 @@ def ea_variator(prng, candidate1, candidate2, args):
 		mutatedIndividual2 = args["mutation_operator"](prng, [candidate2], args)
 		children.append(mutatedIndividual1[0])
 		children.append(mutatedIndividual2[0])
-	# print(children)
 	return children
 
 
@@ -74,7 +77,9 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  global_mutation_operator=None,
 							  adaptive_local_rate=True, mutators_to_alterate=[],
 							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01,
-							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01):
+							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01,
+							  filter_best_spread_nodes=False, dynamic_population=False,
+							  adaptive_mutations=False):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -86,25 +91,13 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	#  selection operator
 	ea.selector = inspyred.ec.selectors.tournament_selection
 
-	# # variation operators (mutation/crossover)
-	# ea.variator = [inspyred.ec.variators.n_point_crossover,
-	# 			   inspyred.ec.variators.random_reset_mutation]
-
-	# ea.variator = [ea_one_point_crossover,
-	# 			   mutation_operator]
-
 	ea.variator = [ea_one_point_crossover, mutation_operator]
-	# ea.variator = [mutation_operator]
-	# ea.variator = ea_variator
-
 
 	# replacement operator
 	ea.replacer = inspyred.ec.replacers.generational_replacement
-	# ea.replacer = inspyred.ec.replacers.comma_replacement
-	# ea.replacer = ea_replacer
 
 	# termination condition
-	ea.terminator = inspyred.ec.terminators.generation_termination
+	ea.terminator = [inspyred.ec.terminators.no_improvement_termination, generation_termination]
 
 	# population evaluator
 	if n_processes == 1:
@@ -114,28 +107,43 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	# --------------------------------------------------------------------------- #
 
-	# nodes = filter_nodes(G, min_degree)
-	nodes = filter_max_spread(G, prng, best_nodes_percentage)
+
+	# nodes = filter_max_spread(G, prng, best_nodes_percentage)
+	nodes = None
+	if filter_best_spread_nodes:
+		search_space_size_min = 1e9
+		search_space_size_max = 1e12
+
+		best_nodes = inverse_ncr(search_space_size_min, k)
+		error = (inverse_ncr(search_space_size_max, k) - best_nodes) / best_nodes
+		filter_function = partial(mc, G=G, random_generator=prng, p=p, model=prop_model, max_hop=2, no_simulations=1)
+		nodes = filter_best_nodes(G, best_nodes, error, filter_function)
+
+	nodes = filter_nodes(G, min_degree, nodes)
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
-	if global_mutation_operator == mutators.ea_global_subpopulation_mutation or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
-		gen = subpopulation_generator
-		seeds = prng.sample(nodes, k)
-		voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
-	else:
-		gen = generator
-		voronoi_cells = None
+	# if global_mutation_operator == mutators.ea_global_subpopulation_mutation or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
+	# 	gen = subpopulation_generator
+	# 	seeds = prng.sample(nodes, k)
+	# 	voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
+	# else:
+	gen = generator
+	voronoi_cells = None
 
 	# run the EA
-	mab = Multi_armed_bandit(mutators_to_alterate, exploration_weight, moving_avg_len)
+	mab = None
+	if adaptive_mutations:
+		mab = Multi_armed_bandit(mutators_to_alterate, exploration_weight, moving_avg_len)
 
 	final_pop = ea.evolve(generator=gen,
 						  evaluator=evaluator,
 						  bounder= bounder,
 						  maximize=True,
 						  pop_size=pop_size,
-						  max_generations=max_generations,
+						  start_size=10,
+						  generations_budget=max_generations,
+						  max_generations=max_generations*0.1,
 						  # max_evaluations=100,
 						  tournament_size=tournament_size,
 						  mutation_rate=mutation_rate,
@@ -164,7 +172,9 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  mab = mab,
 						  p=p,
 						  mutation_operator=mutation_operator,
-						  offspring_fitness = {})
+						  offspring_fitness = {},
+						  individuals_pool = [],
+						  dynamic_population = dynamic_population)
 
 	best_individual = max(final_pop)
 	best_seed_set = best_individual.candidate
