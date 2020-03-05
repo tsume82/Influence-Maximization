@@ -18,6 +18,8 @@ from select_best_spread_nodes import filter_best_nodes
 from functools import partial
 from utils import inverse_ncr
 
+from smart_initialization import degree_random
+
 
 #TODO: remove from here?
 def filter_nodes(G, min_degree, nodes=None):
@@ -79,7 +81,7 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01,
 							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01,
 							  filter_best_spread_nodes=False, dynamic_population=False,
-							  adaptive_mutations=False):
+							  adaptive_mutations=False, smart_initialization = None, smart_initialization_percentage=0.7):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -112,14 +114,19 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	nodes = None
 	if filter_best_spread_nodes:
 		search_space_size_min = 1e9
-		search_space_size_max = 1e12
+		search_space_size_max = 1e11
 
 		best_nodes = inverse_ncr(search_space_size_min, k)
 		error = (inverse_ncr(search_space_size_max, k) - best_nodes) / best_nodes
-		filter_function = partial(mc, G=G, random_generator=prng, p=p, model=prop_model, max_hop=2, no_simulations=1)
+		filter_function = partial(mc, G=G, random_generator=prng, p=p, model=prop_model, max_hop=3, no_simulations=1)
 		nodes = filter_best_nodes(G, best_nodes, error, filter_function)
 
 	nodes = filter_nodes(G, min_degree, nodes)
+
+	if smart_initialization == "degree_random":
+		initial_population = degree_random(k, G,
+										    pop_size,
+										   	prng, nodes=nodes)
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
