@@ -31,31 +31,53 @@ def max_centrality_individual(k, G, centrality_metric="degree"):
 	return list(sorted_nodes_centrality)[:k]
 
 
-def degree_random(k, Graph, n, prng, ranked_probability=False, truncated=100):
+def degree_random(k, Graph, n, prng, nodes = None, ranked_probability=False, truncated=100):
 	"""
 	returns n individuals containing k nodes, chosen from graph with probabilities proportional to their degrees
 	"""
 	individuals = []
+	if nodes is None:
+		nodes = Graph.nodes()
+	nodes_degree = []
+	all_nodes_degree = nx.degree_centrality(Graph)
+	for node in nodes:
+		nodes_degree.append(all_nodes_degree[node])
+	nodes_degree = np.array(nodes_degree)
+	print(len(nodes))
+	print(len(nodes_degree))
+	nodes = np.array(nodes)
 	for _ in range(n):
+		probs = nodes_degree.copy()
+		nodes_ = nodes.copy()
 		new_indiv = []
-		G = Graph.copy()
 		for _ in range(k):
-			nodes_degree = nx.degree_centrality(G)
-			sorted_nodes_degree = dict(
-				sorted(nodes_degree.items(), key=lambda nodes_degree: nodes_degree[1],
-					   reverse=True))
-
-			nodes = list(sorted_nodes_degree.keys())[:truncated]
-			if ranked_probability:
-				probs = range(1, len(nodes)+1)
-			else:
-				probs = list(sorted_nodes_degree.values())
-			probs = np.array(probs[:truncated])
-			probs = probs / max(probs)
-			new_node = prng.choices(nodes, probs)[0]
+			new_node = prng.choices(nodes_, probs)[0]
+			probs = probs[nodes_!=new_node]
+			nodes_ = nodes_[nodes_!=new_node]
+			# print(len(probs))
+			# print(len(nodes))
 			new_indiv.append(new_node)
-			G.remove_node(new_node)
 		individuals.append(new_indiv)
+
+
+		# G = Graph.copy()
+		# for _ in range(k):
+		# 	nodes_degree = nx.degree_centrality(G)
+		# 	sorted_nodes_degree = dict(
+		# 		sorted(nodes_degree.items(), key=lambda nodes_degree: nodes_degree[1],
+		# 			   reverse=True))
+		#
+		# 	nodes = list(sorted_nodes_degree.keys())[:truncated]
+		# 	if ranked_probability:
+		# 		probs = range(1, len(nodes)+1)
+		# 	else:
+		# 		probs = list(sorted_nodes_degree.values())
+		# 	probs = np.array(probs[:truncated])
+		# 	probs = probs / max(probs)
+		# 	new_node = prng.choices(nodes, probs)[0]
+		# 	new_indiv.append(new_node)
+		# 	G.remove_node(new_node)
+		# individuals.append(new_indiv)
 
 	return individuals
 
