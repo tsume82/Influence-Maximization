@@ -4,12 +4,13 @@ import inspyred
 def ea_replacer(random, population, parents, offspring, args):
 	"""
 	selection of the new population: parents + offspring are both used
+
+	the key parameters required to be specified in args are:
+	- max_individual_copies : the allowed number of maximum individual replications in the population
+	- num_elites : number of elites to keep
 	"""
 	n = args["max_individual_copies"]
 	n_elites = args["num_elites"]
-
-	# print(len(offspring))
-	# exit(0)
 
 	# add elites from the old population
 	pool = list(population)
