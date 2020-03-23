@@ -16,6 +16,7 @@ from ea.evolutionary_algorithm import ea_influence_maximization
 import ea.mutators as mutators
 
 from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+from spread.monte_carlo_mark import MonteCarlo_simulation as monte_carlo_mark
 from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
 from spread.monte_carlo_max_hop_mark import MonteCarlo_simulation as monte_carlo_max_hop_mark
 from spread.two_hop import two_hop_spread as two_hop
@@ -25,8 +26,9 @@ from spread.two_hop import two_hop_spread as two_hop
 # from spread_pyx.two_hop import two_hop_spread as two_hop
 
 from smart_initialization import max_centrality_individual, Community_initialization, degree_random
-
-from utils import load_graph, dict2csv
+from utils import load_graph, dict2csv, inverse_ncr
+from nodes_filtering.select_best_spread_nodes import filter_best_nodes as filter_best_spread_nodes
+from nodes_filtering.select_min_degree_nodes import filter_best_nodes as filter_min_degree_nodes
 
 
 def create_initial_population(G, args, prng=None, nodes=None):
@@ -101,7 +103,7 @@ def read_arguments():
 	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
-	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
+	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='influence propagation model')
 	parser.add_argument('--population_size', type=int, default=2, help='population size of the ea')
 	parser.add_argument('--offspring_size', type=int, default=2, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=0, help='seed to initialize the pseudo-random number '
@@ -109,7 +111,7 @@ def read_arguments():
 	parser.add_argument('--max_generations', type=int, default=100, help='generational budget')
 
 	parser.add_argument('--n_parallel', type=int, default=1,
-						help='number of threads or processes to be used for concurrent '
+						help='number of processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
 	parser.add_argument('--g_new_edges', type=int, default=3, help='number of new edges in barabasi-albert graphs')
@@ -126,6 +128,7 @@ def read_arguments():
 	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
 	parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
 																 'generation population')
+	#TODO: guardare come rimuovere questo out_name e out_dir?
 	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
@@ -145,8 +148,9 @@ def read_arguments():
 						help="useful only for smart initialization with spectral clustring, "
 							 "the scale number of clusters to be used, the actual number of clusters"
 							 " will become equal to k*n_clusters")
-	parser.add_argument('--smart_initialization_percentage', type=float, default=0.7,
-						help='percentage of "smart" initial population')
+	parser.add_argument('--smart_initialization_percentage', type=float, default=1,
+						help='percentage of "smart" initial population, to be specified when multiple individuals '
+							 'technique is used')
 
 	parser.add_argument('--crossover_rate', type=float, default=1.0, help='evolutionary algorithm crossover rate')
 	parser.add_argument('--mutation_rate', type=float, default=0.1, help='evolutionary algorithm mutation rate')
@@ -194,6 +198,8 @@ def read_arguments():
 	parser.add_argument("--moving_avg_len", type=int, default=10,
 						help="moving average length for multi-argmed bandit problem")
 	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=True)
+	parser.add_argument("--search_space_size_min", type=int, default=1e9, help="lower bound on the number of combinations")
+	parser.add_argument("--search_space_size_max", type=int, default=1e11, help="upper bound on the number of combinations")
 	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
@@ -297,9 +303,31 @@ def initialize_inidividuls_file(individuals_file):
 	return ind_f
 
 
+def filter_nodes(G, args):
+	"""
+	selects the most promising nodes from the graph	according to specified input arguments techniques
+	:param G:
+	:param args:
+	:return:
+	"""
+	# nodes filtering
+	nodes = None
+	if args["filter_best_spread_nodes"]:
+
+		best_nodes = inverse_ncr(args["search_space_size_min"], args["k"])
+		error = (inverse_ncr(args["search_space_size_max"], args["k"]) - best_nodes) / best_nodes
+		filter_function = partial(monte_carlo_max_hop, G=G, random_generator=prng, p=args["p"], model=args["model"], max_hop=3, no_simulations=1)
+		nodes = filter_best_spread_nodes(G, best_nodes, error, filter_function)
+
+	nodes = filter_min_degree_nodes(G, args["min_degree"], nodes)
+
+	return nodes
+
+
 if __name__ == "__main__":
 	args = read_arguments()
 
+	# load graph
 	G = load_graph(args["g_file"], args["g_type"], args["g_nodes"], args["g_new_edges"], args["g_seed"])
 
 	prng = random.Random(args["random_seed"])
@@ -319,6 +347,8 @@ if __name__ == "__main__":
 			or mutators.ea_local_activation_mutation.__name__ in args["mutators_to_alterate"] \
 			or mutators.ea_global_activation_mutation.__name__ in args["mutators_to_alterate"]:
 		monte_carlo_max_hop = monte_carlo_max_hop_mark
+		monte_carlo = monte_carlo_mark
+
 		init_dict = dict()
 		for n in G.nodes():
 			init_dict[n] = {}
@@ -327,8 +357,9 @@ if __name__ == "__main__":
 	fitness_function = initialize_fitness_function(G, args, prng)
 
 	population_file, generations_file, log_file = create_out_dir(args)
-	initial_population = create_initial_population(G, args, prng)
-	# initial_population = None
+
+	nodes = filter_nodes(G, args)
+	initial_population = create_initial_population(G, args, prng, nodes)
 	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/wiki/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
 	# node2vec_model = initialize_node2vec_model(node2vec_file)
@@ -353,15 +384,13 @@ if __name__ == "__main__":
 														   tournament_size=args["tournament_size"],
 														   num_elites=args["num_elites"],
 														   node2vec_model=node2vec_model,
-														   min_degree=args["min_degree"],
 														   mutators_to_alterate=mutators_to_alterate,
 														   mutation_operator=mutation_operator,
 														   prop_model=args["model"],
 														   p=args["p"],
 														   moving_avg_len=args["moving_avg_len"],
-														   filter_best_spread_nodes = args["filter_best_spread_nodes"],
 														   dynamic_population = args["dynamic_population"],
-														   smart_initialization=args["smart_initialization"])
+														   nodes = nodes)
 
 	individuals_file.close()
 	generations_file.close()

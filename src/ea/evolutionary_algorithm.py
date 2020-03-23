@@ -1,53 +1,14 @@
 import inspyred
 import networkx as nx
 
-from heapq import nlargest
-
-# from ea.mutators import ea_global_local_alteration
 from ea.crossovers import ea_one_point_crossover
 from ea.observers import ea_observer1, ea_observer2
 from ea.evaluators import one_process_evaluator, multiprocess_evaluator
 from ea.generators import generator, subpopulation_generator
 import ea.mutators as mutators
 # from ea.generators import subpopulation_generator as generator
-from ea.replacers import ea_replacer
 from ea.terminators import generation_termination
 from multi_armed_bandit import Multi_armed_bandit
-from spread.monte_carlo_max_hop import MonteCarlo_simulation as mc
-from select_best_spread_nodes import filter_best_nodes
-from functools import partial
-from utils import inverse_ncr
-
-from smart_initialization import degree_random
-
-
-#TODO: remove from here?
-def filter_nodes(G, min_degree, nodes=None):
-	"""
-	selects nodes with degree at least high as min_degree
-	:param G:
-	:param min_degree:
-	:return:
-	"""
-	if nodes is None:
-		nodes = list(G.nodes())
-	if min_degree > 0:
-		for node in nodes:
-			if G.out_degree(node) < min_degree:
-				nodes.remove(node)
-
-	return nodes
-
-
-def filter_max_spread(G, prng, best_percentage=0.001):
-	nodes = list(G.nodes())
-	spreads = {}
-	for n in nodes:
-		i = mc(G=G, A=[n], p=0.01, model="WC", max_hop=3, random_generator=prng, no_simulations=5)
-		spreads[n] = i[0]
-	# select best percentage
-	nodes = nlargest(int(len(G)*best_percentage), spreads, key=spreads.get)
-	return nodes
 
 
 @inspyred.ec.variators.crossover
@@ -86,16 +47,13 @@ def ea_influence_maximization(k,
 							  tournament_size=2,
 							  num_elites=2,
 							  node2vec_model=None,
-							  min_degree=2,
 							  mutators_to_alterate=[],
 							  mutation_operator=None,
 							  prop_model="WC",
 							  p=0.01,
 							  moving_avg_len=100,
-							  filter_best_spread_nodes=False,
 							  dynamic_population=False,
-							  smart_initialization = None,
-							  smart_initialization_percentage=0.7):
+							  nodes=None):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -122,25 +80,6 @@ def ea_influence_maximization(k,
 		evaluator = multiprocess_evaluator
 
 	# --------------------------------------------------------------------------- #
-
-
-	# nodes = filter_max_spread(G, prng, best_nodes_percentage)
-	nodes = None
-	if filter_best_spread_nodes:
-		search_space_size_min = 1e9
-		search_space_size_max = 1e11
-
-		best_nodes = inverse_ncr(search_space_size_min, k)
-		error = (inverse_ncr(search_space_size_max, k) - best_nodes) / best_nodes
-		filter_function = partial(mc, G=G, random_generator=prng, p=p, model=prop_model, max_hop=3, no_simulations=1)
-		nodes = filter_best_nodes(G, best_nodes, error, filter_function)
-
-	nodes = filter_nodes(G, min_degree, nodes)
-
-	if smart_initialization == "degree_random":
-		initial_population = degree_random(k, G,
-										    pop_size,
-										   	prng, nodes=nodes)
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
