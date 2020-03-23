@@ -106,7 +106,7 @@ def read_arguments():
 	parser.add_argument('--offspring_size', type=int, default=2, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=0, help='seed to initialize the pseudo-random number '
 																	'generation')
-	parser.add_argument('--max_generations', type=int, default=100, help='maximum generations')
+	parser.add_argument('--max_generations', type=int, default=100, help='generational budget')
 
 	parser.add_argument('--n_parallel', type=int, default=1,
 						help='number of threads or processes to be used for concurrent '
@@ -153,8 +153,6 @@ def read_arguments():
 	parser.add_argument('--tournament_size', type=int, default=5, help='evolutionary algorithm tournament size')
 	parser.add_argument('--num_elites', type=int, default=1, help='evolutionary algorithm num_elites')
 	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
-	parser.add_argument('--max_individual_copies', type=int, default=1,
-						help='max individual duplicates permitted in a population')
 	parser.add_argument('--min_degree', type=int, default=1,
 						help='minimum degree for a node to be inserted into nodes pool in ea')
 
@@ -193,12 +191,8 @@ def read_arguments():
 																				],
 						help='list of mutation methods to alterate')
 
-	parser.add_argument("--exploration_weight", type=float, default=0.01,
-						help="exploration weight for multi-armed bandit problem")
 	parser.add_argument("--moving_avg_len", type=int, default=10,
 						help="moving average length for multi-argmed bandit problem")
-	parser.add_argument("--best_nodes_percentage", type=float, default=0.005, help="the percentage of nodes with best spread "
-																				  "used to build solutions")
 	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=True)
 	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
@@ -360,14 +354,11 @@ if __name__ == "__main__":
 														   num_elites=args["num_elites"],
 														   node2vec_model=node2vec_model,
 														   min_degree=args["min_degree"],
-														   max_individual_copies=args["max_individual_copies"],
 														   mutators_to_alterate=mutators_to_alterate,
 														   mutation_operator=mutation_operator,
 														   prop_model=args["model"],
 														   p=args["p"],
-														   exploration_weight=args["exploration_weight"],
 														   moving_avg_len=args["moving_avg_len"],
-														   best_nodes_percentage = args["best_nodes_percentage"],
 														   filter_best_spread_nodes = args["filter_best_spread_nodes"],
 														   dynamic_population = args["dynamic_population"],
 														   smart_initialization=args["smart_initialization"])

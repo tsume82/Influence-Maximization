@@ -70,17 +70,32 @@ def ea_variator(prng, candidate1, candidate2, args):
 	return children
 
 
-def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, max_generations, prng,
-							  crossover_rate=0, mutation_rate=1, n_processes=1, initial_population=[],
-							  individuals_file=None, statistics_file=None, tournament_size=2, num_elites=2,
-							  node2vec_model=None, min_degree=2,
-							  max_individual_copies=2,
+def ea_influence_maximization(k,
+							  G,
+							  fitness_function,
+							  pop_size,
+							  offspring_size,
+							  max_generations,
+							  prng,
+							  crossover_rate=0,
+							  mutation_rate=1,
+							  n_processes=1,
+							  initial_population=[],
+							  individuals_file=None,
+							  statistics_file=None,
+							  tournament_size=2,
+							  num_elites=2,
+							  node2vec_model=None,
+							  min_degree=2,
 							  mutators_to_alterate=[],
 							  mutation_operator=None,
-							  prop_model="WC", p=0.01,
-							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01,
-							  filter_best_spread_nodes=False, dynamic_population=False,
-							  smart_initialization = None, smart_initialization_percentage=0.7):
+							  prop_model="WC",
+							  p=0.01,
+							  moving_avg_len=100,
+							  filter_best_spread_nodes=False,
+							  dynamic_population=False,
+							  smart_initialization = None,
+							  smart_initialization_percentage=0.7):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -140,7 +155,8 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 	# run the EA
 	mab = None
 	if mutation_operator == mutators.ea_adaptive_mutators_alteration:
-		mab = Multi_armed_bandit(mutators_to_alterate, exploration_weight, moving_avg_len)
+		init_exploration_weight = 1
+		mab = Multi_armed_bandit(mutators_to_alterate, init_exploration_weight, moving_avg_len)
 
 	final_pop = ea.evolve(generator=gen,
 						  evaluator=evaluator,
@@ -168,7 +184,6 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  prev_population_best=-1,
 						  model=node2vec_model,
 						  prop_model = prop_model,
-						  max_individual_copies=max_individual_copies,
 						  voronoi_cells=voronoi_cells,
 						  mutators_to_alterate=mutators_to_alterate,
 						  mab = mab,
