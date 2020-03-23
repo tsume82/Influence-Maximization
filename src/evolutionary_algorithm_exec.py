@@ -158,6 +158,25 @@ def read_arguments():
 	parser.add_argument('--min_degree', type=int, default=1,
 						help='minimum degree for a node to be inserted into nodes pool in ea')
 
+	parser.add_argument('--mutation_operator', type=str, default="adaptive_mutations", choices=["ea_global_random_mutation",
+																					  "ea_local_neighbors_random_mutation",
+																					  "ea_local_neighbors_second_degree_mutation",
+																					  "ea_global_low_spread",
+																					  "ea_global_low_deg_mutation",
+																					  "ea_local_approx_spread_mutation",
+																					  "ea_local_embeddings_mutation",
+																					  "ea_global_subpopulation_mutation",
+																					  "ea_adaptive_mutators_alteration",
+																					  "ea_local_neighbors_spread_mutation",
+																					  "ea_local_additional_spread_mutation",
+																					  "ea_local_neighbors_second_degree_mutation_emb",
+																					  "ea_global_low_additional_spread",
+																					  "ea_differential_evolution_mutation",
+																					  "ea_global_activation_mutation",
+																					  "ea_local_activation_mutation",
+																					  "adaptive_mutations",
+																					  ])
+
 	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=["ea_local_activation_mutation",
 																				#'ea_local_neighbors_second_degree_mutation',
 																				#"ea_local_neighbors_second_degree_mutation_emb",
@@ -174,9 +193,6 @@ def read_arguments():
 																				],
 						help='list of mutation methods to alterate')
 
-	parser.add_argument("--adaptive_mutations", type=str2bool, nargs='?',
-						const=True, default=True,
-						help="set to true to use adaptive mutation operator")
 	parser.add_argument("--exploration_weight", type=float, default=0.01,
 						help="exploration weight for multi-armed bandit problem")
 	parser.add_argument("--moving_avg_len", type=int, default=10,
@@ -296,12 +312,13 @@ if __name__ == "__main__":
 
 	# load mutation function
 	mutation_operator = None
-	if args["adaptive_mutations"]:
-		mutation_operator = mutators.ea_adaptive_mutators_alteration
-
 	mutators_to_alterate = []
-	for m in args["mutators_to_alterate"]:
-		mutators_to_alterate.append(getattr(mutators, m))
+	if args["mutation_operator"] == "adaptive_mutations":
+		mutation_operator = mutators.ea_adaptive_mutators_alteration
+		for m in args["mutators_to_alterate"]:
+			mutators_to_alterate.append(getattr(mutators, m))
+	else:
+		mutation_operator = getattr(mutators, args["mutation_operator"])
 
 	if mutation_operator == mutators.ea_local_activation_mutation \
 			or mutation_operator == mutators.ea_global_activation_mutation \
@@ -353,7 +370,6 @@ if __name__ == "__main__":
 														   best_nodes_percentage = args["best_nodes_percentage"],
 														   filter_best_spread_nodes = args["filter_best_spread_nodes"],
 														   dynamic_population = args["dynamic_population"],
-														   adaptive_mutations = args["adaptive_mutations"],
 														   smart_initialization=args["smart_initialization"])
 
 	individuals_file.close()

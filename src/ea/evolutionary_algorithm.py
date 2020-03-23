@@ -76,10 +76,11 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  node2vec_model=None, min_degree=2,
 							  max_individual_copies=2,
 							  mutators_to_alterate=[],
-							  mutation_operator=None, prop_model="WC", p=0.01,
+							  mutation_operator=None,
+							  prop_model="WC", p=0.01,
 							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01,
 							  filter_best_spread_nodes=False, dynamic_population=False,
-							  adaptive_mutations=False, smart_initialization = None, smart_initialization_percentage=0.7):
+							  smart_initialization = None, smart_initialization_percentage=0.7):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -138,7 +139,7 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 
 	# run the EA
 	mab = None
-	if adaptive_mutations:
+	if mutation_operator == mutators.ea_adaptive_mutators_alteration:
 		mab = Multi_armed_bandit(mutators_to_alterate, exploration_weight, moving_avg_len)
 
 	final_pop = ea.evolve(generator=gen,
