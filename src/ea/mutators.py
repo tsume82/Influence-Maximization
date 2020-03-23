@@ -208,27 +208,6 @@ def ea_global_low_deg_mutation(prng, candidate, args):
 
 	return mutatedIndividual
 
-#TODO: non serve più??
-@inspyred.ec.variators.mutator
-def ea_global_local_alteration(prng, candidate, args):
-	"""
-	this method calls with certain probability global and local mutations, those must be specified in args as
-	parameters
-	:param prng:
-	:param candidate:
-	:param args:
-	:return:
-	"""
-	mut = prng.random()
-	if mut < args["local_mutation_rate"]:
-		mutation = args["local_mutation_operator"]
-	else:
-		mutation = args["global_mutation_operator"]
-
-	mutatedIndividual = mutation(prng, candidate, args)
-
-	return mutatedIndividual
-
 
 def ea_local_approx_spread_mutation(prng, candidate, args):
 	"""

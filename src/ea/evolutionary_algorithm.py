@@ -3,7 +3,7 @@ import networkx as nx
 
 from heapq import nlargest
 
-from ea.mutators import ea_global_local_alteration
+# from ea.mutators import ea_global_local_alteration
 from ea.crossovers import ea_one_point_crossover
 from ea.observers import ea_observer1, ea_observer2
 from ea.evaluators import one_process_evaluator, multiprocess_evaluator
@@ -74,11 +74,9 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 							  crossover_rate=0, mutation_rate=1, n_processes=1, initial_population=[],
 							  individuals_file=None, statistics_file=None, tournament_size=2, num_elites=2,
 							  node2vec_model=None, min_degree=2,
-							  max_individual_copies=2, local_mutation_rate=0.5,
-							  local_mutation_operator=None,
-							  global_mutation_operator=None,
-							  adaptive_local_rate=True, mutators_to_alterate=[],
-							  mutation_operator=ea_global_local_alteration, prop_model="WC", p=0.01,
+							  max_individual_copies=2,
+							  mutators_to_alterate=[],
+							  mutation_operator=None, prop_model="WC", p=0.01,
 							  exploration_weight=1, moving_avg_len=100, best_nodes_percentage=0.01,
 							  filter_best_spread_nodes=False, dynamic_population=False,
 							  adaptive_mutations=False, smart_initialization = None, smart_initialization_percentage=0.7):
@@ -167,10 +165,6 @@ def ea_influence_maximization(k, G, fitness_function, pop_size, offspring_size, 
 						  individuals_file=individuals_file,
 						  statistics_file=statistics_file,
 						  prev_population_best=-1,
-						  local_mutation_operator=local_mutation_operator,
-						  global_mutation_operator=global_mutation_operator,
-						  local_mutation_rate=local_mutation_rate,
-						  adaptive_local_rate=adaptive_local_rate,
 						  model=node2vec_model,
 						  prop_model = prop_model,
 						  max_individual_copies=max_individual_copies,

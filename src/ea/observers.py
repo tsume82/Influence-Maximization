@@ -11,9 +11,6 @@ def ea_observer1(population, num_generations, num_evaluations, args):
 	# to access to evolutionary computation stuff
 	div = diversity(population)
 	print("generation {}: diversity {}".format(num_generations, div))
-	# if adaptive, set local mutation rate to the nodes diversity
-	if args["adaptive_local_rate"]:
-		args["local_mutation_rate"] = div
 	ind_div = individuals_diversity(population)
 	print("generation {}: individuals diversity {}".format(num_generations, ind_div))
 

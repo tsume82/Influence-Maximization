@@ -12,7 +12,6 @@ import utils
 
 from gensim.models import KeyedVectors
 
-# from evolutionary_algorithm import ea_influence_maximization
 from ea.evolutionary_algorithm import ea_influence_maximization
 import ea.mutators as mutators
 
@@ -99,8 +98,7 @@ def read_arguments():
 	parser.add_argument('--p', type=float, default=0.01, help='probability of influence spread in IC model')
 	parser.add_argument('--spread_function', default="monte_carlo_max_hop",
 						choices=["monte_carlo", "monte_carlo_max_hop", "two_hop"])
-	parser.add_argument('--no_simulations', type=int, default=100
-						, help='number of simulations for spread calculation'
+	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='type of influence propagation model')
@@ -153,27 +151,13 @@ def read_arguments():
 	parser.add_argument('--crossover_rate', type=float, default=1.0, help='evolutionary algorithm crossover rate')
 	parser.add_argument('--mutation_rate', type=float, default=0.1, help='evolutionary algorithm mutation rate')
 	parser.add_argument('--tournament_size', type=int, default=5, help='evolutionary algorithm tournament size')
-	parser.add_argument('--num_elites', type=int, default=2, help='evolutionary algorithm num_elites')
+	parser.add_argument('--num_elites', type=int, default=1, help='evolutionary algorithm num_elites')
 	parser.add_argument('--node2vec_file', type=str, default=None, help='evolutionary algorithm node2vec_file')
 	parser.add_argument('--max_individual_copies', type=int, default=1,
 						help='max individual duplicates permitted in a population')
-	parser.add_argument('--min_degree', type=int, default=0,
+	parser.add_argument('--min_degree', type=int, default=1,
 						help='minimum degree for a node to be inserted into nodes pool in ea')
-	parser.add_argument('--local_search_rate', type=float, default=0,
-						help='evolutionary algorithm local search probability, the global search is set'
-							 'automatically to 1-local_search_rate')
 
-	parser.add_argument('--local_mutation_operator', type=str, default='ea_local_neighbors_random_mutation',
-						choices=["ea_local_activation_mutation", 'ea_local_neighbors_second_degree_mutation',
-								 "ea_local_neighbors_second_degree_mutation_emb", "ea_local_embeddings_mutation",
-								 "ea_local_neighbors_random_mutation", "ea_local_neighbors_spread_mutation",
-								 "ea_local_additional_spread_mutation", "ea_local_approx_spread_mutation"],
-						help='local search mutation operator')
-	parser.add_argument('--global_mutation_operator', type=str, default="ea_global_random_mutation",
-						choices=["ea_global_activation_mutation", "ea_global_low_deg_mutation",
-								 "ea_global_random_mutation", "ea_differential_evolution_mutation",
-								 "ea_global_low_spread", "ea_global_low_additional_spread",
-								 "ea_global_subpopulation_mutation"], help='global search mutation operator')
 	parser.add_argument('--mutators_to_alterate', type=str, nargs='+', default=["ea_local_activation_mutation",
 																				#'ea_local_neighbors_second_degree_mutation',
 																				#"ea_local_neighbors_second_degree_mutation_emb",
@@ -190,9 +174,6 @@ def read_arguments():
 																				],
 						help='list of mutation methods to alterate')
 
-	parser.add_argument("--adaptive_local_rate", type=str2bool, nargs='?',
-						const=True, default=False,
-						help="ee.")
 	parser.add_argument("--adaptive_mutations", type=str2bool, nargs='?',
 						const=True, default=True,
 						help="set to true to use adaptive mutation operator")
@@ -313,21 +294,17 @@ if __name__ == "__main__":
 
 	prng = random.Random(args["random_seed"])
 
-	# load mutation functions
-
-	local_mutation_operator = getattr(mutators, args["local_mutation_operator"])
-	global_mutation_operator = getattr(mutators, args["global_mutation_operator"])
+	# load mutation function
+	mutation_operator = None
 	if args["adaptive_mutations"]:
 		mutation_operator = mutators.ea_adaptive_mutators_alteration
-	else:
-		mutation_operator = mutators.ea_global_local_alteration
 
 	mutators_to_alterate = []
 	for m in args["mutators_to_alterate"]:
 		mutators_to_alterate.append(getattr(mutators, m))
 
-	if local_mutation_operator == mutators.ea_local_activation_mutation \
-			or global_mutation_operator == mutators.ea_global_activation_mutation \
+	if mutation_operator == mutators.ea_local_activation_mutation \
+			or mutation_operator == mutators.ea_global_activation_mutation \
 			or mutators.ea_local_activation_mutation.__name__ in args["mutators_to_alterate"] \
 			or mutators.ea_global_activation_mutation.__name__ in args["mutators_to_alterate"]:
 		monte_carlo_max_hop = monte_carlo_max_hop_mark
@@ -339,8 +316,8 @@ if __name__ == "__main__":
 	fitness_function = initialize_fitness_function(G, args, prng)
 
 	population_file, generations_file, log_file = create_out_dir(args)
-	# initial_population = create_initial_population(G, args, prng)
-	initial_population = None
+	initial_population = create_initial_population(G, args, prng)
+	# initial_population = None
 	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/wiki/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
 	# node2vec_model = initialize_node2vec_model(node2vec_file)
@@ -367,10 +344,6 @@ if __name__ == "__main__":
 														   node2vec_model=node2vec_model,
 														   min_degree=args["min_degree"],
 														   max_individual_copies=args["max_individual_copies"],
-														   local_mutation_rate=args["local_search_rate"],
-														   local_mutation_operator=local_mutation_operator,
-														   global_mutation_operator=global_mutation_operator,
-														   adaptive_local_rate=args["adaptive_local_rate"],
 														   mutators_to_alterate=mutators_to_alterate,
 														   mutation_operator=mutation_operator,
 														   prop_model=args["model"],
