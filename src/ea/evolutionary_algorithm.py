@@ -2,7 +2,7 @@ import inspyred
 import networkx as nx
 
 from ea.crossovers import ea_one_point_crossover
-from ea.observers import ea_observer1, ea_observer2
+from ea.observers import ea_observer0, ea_observer1, ea_observer2
 from ea.evaluators import one_process_evaluator, multiprocess_evaluator
 from ea.generators import generator, subpopulation_generator
 import ea.mutators as mutators
@@ -61,7 +61,7 @@ def ea_influence_maximization(k,
 	# observers: provide various logging features
 	ea.observer = [inspyred.ec.observers.stats_observer,
 					   inspyred.ec.observers.file_observer,
-				   ea_observer1, ea_observer2]
+				   ea_observer0, ea_observer1, ea_observer2]
 
 	#  selection operator
 	ea.selector = inspyred.ec.selectors.tournament_selection
