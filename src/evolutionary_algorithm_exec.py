@@ -201,6 +201,9 @@ def read_arguments():
 	parser.add_argument("--search_space_size_min", type=int, default=1e9, help="lower bound on the number of combinations")
 	parser.add_argument("--search_space_size_max", type=int, default=1e11, help="upper bound on the number of combinations")
 	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)
+	parser.add_argument("--max_generations_percentage_without_improvement", type=float, default=0.1, help="percentage of"
+						" the generational budget to use for smart stop condition, ea stops when for this percentage of generations "
+						"there is no improvement")
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
 
 	args = parser.parse_args()
@@ -390,7 +393,9 @@ if __name__ == "__main__":
 														   p=args["p"],
 														   moving_avg_len=args["moving_avg_len"],
 														   dynamic_population = args["dynamic_population"],
-														   nodes = nodes)
+														   nodes = nodes,
+														   max_generations_percentage_without_improvement =
+														   args["max_generations_percentage_without_improvement"])
 
 	individuals_file.close()
 	generations_file.close()

@@ -11,24 +11,24 @@ from ea.terminators import generation_termination
 from multi_armed_bandit import Multi_armed_bandit
 
 
-@inspyred.ec.variators.crossover
-def ea_variator(prng, candidate1, candidate2, args):
-	randomChoice = prng.random()
-
-	# one-point crossover or mutation that swaps exactly one node with another
-	children = []
-	if randomChoice < args["crossover_rate"]:
-		res = ea_one_point_crossover(prng, candidate1, candidate2, args)
-		for mut in res:
-			children.append(mut)
-
-	randomChoice = prng.random()
-	if randomChoice < args["mutation_rate"]:
-		mutatedIndividual1 = args["mutation_operator"](prng, [candidate1], args)
-		mutatedIndividual2 = args["mutation_operator"](prng, [candidate2], args)
-		children.append(mutatedIndividual1[0])
-		children.append(mutatedIndividual2[0])
-	return children
+# @inspyred.ec.variators.crossover
+# def ea_variator(prng, candidate1, candidate2, args):
+# 	randomChoice = prng.random()
+#
+# 	# one-point crossover or mutation that swaps exactly one node with another
+# 	children = []
+# 	if randomChoice < args["crossover_rate"]:
+# 		res = ea_one_point_crossover(prng, candidate1, candidate2, args)
+# 		for mut in res:
+# 			children.append(mut)
+#
+# 	randomChoice = prng.random()
+# 	if randomChoice < args["mutation_rate"]:
+# 		mutatedIndividual1 = args["mutation_operator"](prng, [candidate1], args)
+# 		mutatedIndividual2 = args["mutation_operator"](prng, [candidate2], args)
+# 		children.append(mutatedIndividual1[0])
+# 		children.append(mutatedIndividual2[0])
+# 	return children
 
 
 def ea_influence_maximization(k,
@@ -53,7 +53,8 @@ def ea_influence_maximization(k,
 							  p=0.01,
 							  moving_avg_len=100,
 							  dynamic_population=False,
-							  nodes=None):
+							  nodes=None,
+							  max_generations_percentage_without_improvement = 0.1):
 
 	ea = inspyred.ec.EvolutionaryComputation(prng)
 
@@ -83,13 +84,13 @@ def ea_influence_maximization(k,
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
-	# if global_mutation_operator == mutators.ea_global_subpopulation_mutation or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
-	# 	gen = subpopulation_generator
-	# 	seeds = prng.sample(nodes, k)
-	# 	voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
-	# else:
-	gen = generator
-	voronoi_cells = None
+	if mutation_operator == mutators.ea_global_subpopulation_mutation or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
+		gen = subpopulation_generator
+		seeds = prng.sample(nodes, k)
+		voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
+	else:
+		gen = generator
+		voronoi_cells = None
 
 	# run the EA
 	mab = None
@@ -102,10 +103,8 @@ def ea_influence_maximization(k,
 						  bounder= bounder,
 						  maximize=True,
 						  pop_size=pop_size,
-						  start_size=10,
 						  generations_budget=max_generations,
-						  max_generations=max_generations*0.1,
-						  # max_evaluations=100,
+						  max_generations=int(max_generations*max_generations_percentage_without_improvement),
 						  tournament_size=tournament_size,
 						  mutation_rate=mutation_rate,
 						  crossover_rate=crossover_rate,
