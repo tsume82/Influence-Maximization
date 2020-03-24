@@ -22,7 +22,7 @@ def multiprocess_evaluator(candidates, args):
 	# constant parameters
 	f = partial(ea_evaluator_processed, fitness_function=fitness_function)
 	fitness = list(process_pool.imap(f, tasks))
-	print(fitness)
+	# print(fitness)
 	return fitness
 
 
@@ -32,6 +32,7 @@ def ea_evaluator_processed(args, fitness_function):
 	# run spread simulation
 	if fitness_function.func != two_hop:
 		influence_mean, influence_std = fitness_function(A=A, random_generator=random.Random(random_seed))
+		# influence_mean, influence_std = fitness_function(A=A)
 
 	else:
 		influence_mean = fitness_function(A=A)

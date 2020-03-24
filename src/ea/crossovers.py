@@ -14,12 +14,21 @@ def ea_one_point_crossover(prng, candidate1, candidate2, args):
 		# while candidates have less then 2 nodes in common crossover would not produce any new candidates,
 		# so mutation is forced
 		if (len(candidate1) - len(common) == 1):
-			candidate1 = ea_global_random_mutation(prng, candidate1, args)
-			candidate2 = ea_global_random_mutation(prng, candidate2, args)
-		elif (len(candidate1)==len(common)):
-			for _ in range(2):
+			if args["mutation_operator"] == ea_global_random_mutation:
+				candidate1 = ea_global_random_mutation(prng, [candidate1], args)[0]
+				candidate2 = ea_global_random_mutation(prng, [candidate2], args)[0]
+			else:
 				candidate1 = ea_global_random_mutation(prng, candidate1, args)
 				candidate2 = ea_global_random_mutation(prng, candidate2, args)
+		elif (len(candidate1)==len(common)):
+			for _ in range(2):
+				if args["mutation_operator"] == ea_global_random_mutation:
+					candidate1 = ea_global_random_mutation(prng, [candidate1], args)[0]
+					candidate2 = ea_global_random_mutation(prng, [candidate2], args)[0]
+				else:
+					candidate1 = ea_global_random_mutation(prng, candidate1, args)
+					candidate2 = ea_global_random_mutation(prng, candidate2, args)
+
 		max_trials -= 1
 		common = list(set(candidate1).intersection(set(candidate2)))
 

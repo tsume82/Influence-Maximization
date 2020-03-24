@@ -25,7 +25,8 @@ def adjust_population_size(num_generations, population, args):
 				args["_ec"].population.append(inspyred.ec.Individual(candidate=candidate))
 				args["_ec"].population[-1].fitness = args["fitness_function"](A=candidate)[0]
 			args["num_selected"] = len(args["_ec"].population)
-		elif len(population) > 2 and improvement > 0:
+
+		elif len(population) > args["min_pop_size"] and improvement > 0:
 			min_fit_ind = args["_ec"].population[0]
 			for ind in args["_ec"].population:
 				if ind.fitness < min_fit_ind.fitness:

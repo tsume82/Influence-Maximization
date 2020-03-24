@@ -104,13 +104,13 @@ def read_arguments():
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--max_hop', type=int, default=3, help='number of max hops for monte carlo max hop function')
 	parser.add_argument('--model', default="WC", choices=['IC', 'WC'], help='influence propagation model')
-	parser.add_argument('--population_size', type=int, default=2, help='population size of the ea')
-	parser.add_argument('--offspring_size', type=int, default=2, help='offspring size of the ea')
+	parser.add_argument('--population_size', type=int, default=4, help='population size of the ea')
+	parser.add_argument('--offspring_size', type=int, default=4, help='offspring size of the ea')
 	parser.add_argument('--random_seed', type=int, default=0, help='seed to initialize the pseudo-random number '
 																	'generation')
-	parser.add_argument('--max_generations', type=int, default=100, help='generational budget')
+	parser.add_argument('--max_generations', type=int, default=50, help='generational budget')
 
-	parser.add_argument('--n_parallel', type=int, default=1,
+	parser.add_argument('--n_parallel', type=int, default=4,
 						help='number of processes to be used for concurrent '
 							 'computation')
 	parser.add_argument('--g_nodes', type=int, default=100, help='number of nodes in the graph')
@@ -133,7 +133,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="degree_random", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
 																		   "closeness", "betweenness",
 																		   "community", "community_degree",
 																		   "community_degree_spectral", "degree_random",
@@ -197,11 +197,11 @@ def read_arguments():
 
 	parser.add_argument("--moving_avg_len", type=int, default=10,
 						help="moving average length for multi-argmed bandit problem")
-	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=True)
+	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=False)
 	parser.add_argument("--search_space_size_min", type=int, default=1e9, help="lower bound on the number of combinations")
 	parser.add_argument("--search_space_size_max", type=int, default=1e11, help="upper bound on the number of combinations")
 	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)
-	parser.add_argument("--max_generations_percentage_without_improvement", type=float, default=0.1, help="percentage of"
+	parser.add_argument("--max_generations_percentage_without_improvement", type=float, default=0.5, help="percentage of"
 						" the generational budget to use for smart stop condition, ea stops when for this percentage of generations "
 						"there is no improvement")
 	parser.add_argument('--config_file', type=str, help="Input json file containing configurations parameters")
@@ -406,8 +406,8 @@ if __name__ == "__main__":
 	print("Spread: ", best_spread)
 
 	# best_mc_spread, _ = monte_carlo(G, best_seed_set, args.p, args.no_simulations, args.model, prng)
-	best_mc_spread, _ = monte_carlo(G, best_seed_set, args["p"], 100, args["model"], prng)
-	print("Best monte carlo spread: ", best_mc_spread)
+	best_mc_spread, std1 = monte_carlo(G, best_seed_set, args["p"], 100, args["model"], prng)
+	print("Best monte carlo spread: ", best_mc_spread, std1)
 
 	# write experiment log
 
