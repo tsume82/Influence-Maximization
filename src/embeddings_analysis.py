@@ -1,5 +1,7 @@
-# here we study how the node2vec embeddings are correlated with the features we are interested in:
-# out-degree, average path distance, "community-distance"
+"""
+here we study how the node2vec embeddings are correlated with the features we are interested in:
+out-degree, average path distance
+"""
 
 import networkx as nx
 import argparse
@@ -16,15 +18,15 @@ from utils import load_graph, random_nodes
 def read_arguments():
 
 	parser = argparse.ArgumentParser(description='Calculation of node2vec embeddings')
-	# parser.add_argument('--g_nodes', type=int, default=10, help='number of nodes in the graph')
-	# parser.add_argument('--g_file', default=None, help='location of graph file')
-	# parser.add_argument('--g_new_edges', type=int, default=2, help='number of new edges in barabasi-albert graphs')
-	# parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition',
-	# 																	'wiki', 'amazon', 'epinions',
-	# 																	'twitter', 'facebook', 'CA-GrQc'],
-	# 					help='graph type')
-	#
-	# parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
+	parser.add_argument('--g_nodes', type=int, default=10, help='number of nodes in the graph')
+	parser.add_argument('--g_file', default=None, help='location of graph file')
+	parser.add_argument('--g_new_edges', type=int, default=2, help='number of new edges in barabasi-albert graphs')
+	parser.add_argument('--g_type', default='barabasi_albert', choices=['barabasi_albert', 'gaussian_random_partition',
+																		'wiki', 'amazon', 'epinions',
+																		'twitter', 'facebook', 'CA-GrQc'],
+						help='graph type')
+
+	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--random_seed', type=int, default=44)
 
 	parser.add_argument('--N', type=int, default=100, help='number of random nodes to use for the correlations')
@@ -74,7 +76,6 @@ if __name__ == "__main__":
 
 	# read node2vec embeddings
 	model = KeyedVectors.load_word2vec_format(args.node2vec_file, binary=False)
-	# print(model.distances(nodes[0].astype(str), nodes[2].astype(str)))
 
 	# compute the distances between the embeddings
 	pairs = combinations(nodes, 2)
@@ -113,7 +114,6 @@ if __name__ == "__main__":
 			except nx.NetworkXNoPath:
 				shortest_path_distances[i] = -1
 
-		# corr = np.corrcoef(degree_distances, node2vec_distances)[1][0]
 		corr = np.corrcoef(shortest_path_distances[shortest_path_distances!=-1], node2vec_distances[shortest_path_distances!=-1])[1][0]
 
 		df["shortest_path_node2vec_corr"] = corr
@@ -121,8 +121,3 @@ if __name__ == "__main__":
 	# write the output
 	df.to_csv(args.out_log_file)
 
-	# TODO
-	# compute the "community-distance" : if two nodes are in the same community their distance is 0 otherwise their distance
-	# is the distance among communities, eheh we need communities distances here
-
-	# compute the correlation between distances
