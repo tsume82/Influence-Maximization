@@ -1,9 +1,15 @@
+"""
+Code for fitness functions comparisons experiment: n seed sets are randomly sampled, each fitness function is evaluated
+and the pearson correlation of the resulting values is computed
+"""
+
 import networkx as nx
 import argparse
 import pandas as pd
 from functools import partial
 import random
 import numpy as np
+import time
 
 from utils import add_weights_WC, add_weights_IC, dict2csv
 from load import read_graph
@@ -15,7 +21,7 @@ if __name__ == "__main__":
 
 	parser = argparse.ArgumentParser(description='Spread functions computation')
 	parser.add_argument('--k', type=int, default=5, help='seed set size')
-	parser.add_argument('--p', type=float, default=0.2, help='probability of influence spread in IC model')
+	parser.add_argument('--p', type=float, default=0.01, help='probability of influence spread in IC model')
 	parser.add_argument('--n', type=int, default=100, help='number of seed set extractions')
 	parser.add_argument('--max_hop', type=int, default=2, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
@@ -31,7 +37,7 @@ if __name__ == "__main__":
 	parser.add_argument('--no_simulations', type=int, default=100, help='number of simulations for spread calculation'
 																		' when montecarlo mehtod is used')
 	parser.add_argument('--out_dir', default=".", help='location of the output directory in case if outfile is preferred'
-														'to have default name')
+														' to have default name')
 	args = parser.parse_args()
 
 	# create / load graph
@@ -56,8 +62,8 @@ if __name__ == "__main__":
 		elif args.g_type == "epinions":
 			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
 			args.g_nodes = len(G.nodes())
-	# extract n seed sets
 
+	# extract n seed sets
 	seed_sets = []
 	prng = random.Random(args.random_seed)
 	for _ in range(args.n):
@@ -66,6 +72,7 @@ if __name__ == "__main__":
 			seed_set.append(prng.randint(0, args.g_nodes-1))
 		seed_sets.append(seed_set)
 
+	# initialize fitness functions
 	monte_carlo_mh = partial(monte_carlo_max_hop, G=G, p=args.p, max_hop=args.max_hop, random_generator=prng,
 							 no_simulations=args.no_simulations, model=args.model)
 	monte_carlo_ = partial(monte_carlo, G=G, random_generator=prng, p=args.p, no_simulations=args.no_simulations, model=args.model)
@@ -82,8 +89,6 @@ if __name__ == "__main__":
 	f.write(",".join(out_cols))
 
 	G_nodes = np.array(G.nodes())
-
-	import time
 
 	# logging computation time
 	comp_time_mc = np.zeros(len(seed_sets))
