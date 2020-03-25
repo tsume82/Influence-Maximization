@@ -7,7 +7,7 @@ from sklearn.cluster import SpectralClustering
 def max_centrality_individual(k, G, centrality_metric="degree"):
 	"""
 	returns k nodes with the highest centrality metric
-	:param k:
+	:param k: seed set size
 	:param G: networkx graph
 	:param centrality_metric: centrality metric string, to be chosen from "degree", "eigenvector", "katz", "closeness",
 							  "betweenness", "second_order"
@@ -43,8 +43,6 @@ def degree_random(k, Graph, n, prng, nodes = None, ranked_probability=False, tru
 	for node in nodes:
 		nodes_degree.append(all_nodes_degree[node])
 	nodes_degree = np.array(nodes_degree)
-	print(len(nodes))
-	print(len(nodes_degree))
 	nodes = np.array(nodes)
 	for _ in range(n):
 		probs = nodes_degree.copy()
@@ -54,30 +52,8 @@ def degree_random(k, Graph, n, prng, nodes = None, ranked_probability=False, tru
 			new_node = prng.choices(nodes_, probs)[0]
 			probs = probs[nodes_!=new_node]
 			nodes_ = nodes_[nodes_!=new_node]
-			# print(len(probs))
-			# print(len(nodes))
 			new_indiv.append(new_node)
 		individuals.append(new_indiv)
-
-
-		# G = Graph.copy()
-		# for _ in range(k):
-		# 	nodes_degree = nx.degree_centrality(G)
-		# 	sorted_nodes_degree = dict(
-		# 		sorted(nodes_degree.items(), key=lambda nodes_degree: nodes_degree[1],
-		# 			   reverse=True))
-		#
-		# 	nodes = list(sorted_nodes_degree.keys())[:truncated]
-		# 	if ranked_probability:
-		# 		probs = range(1, len(nodes)+1)
-		# 	else:
-		# 		probs = list(sorted_nodes_degree.values())
-		# 	probs = np.array(probs[:truncated])
-		# 	probs = probs / max(probs)
-		# 	new_node = prng.choices(nodes, probs)[0]
-		# 	new_indiv.append(new_node)
-		# 	G.remove_node(new_node)
-		# individuals.append(new_indiv)
 
 	return individuals
 
@@ -114,7 +90,6 @@ class Community_initialization:
 				raise Exception('Number of clusters not specified')
 			sc = SpectralClustering(n_clusters, affinity='precomputed', n_init=100, assign_labels='discretize', 
 									random_state=random_seed)
-			# adj = nx.to_numpy_matrix(G)
 			adj = nx.to_scipy_sparse_matrix(G)
 			sc.fit(adj)
 			comm_idxs = set(sc.labels_)
@@ -129,10 +104,7 @@ class Community_initialization:
 			for i, k in enumerate(self.communities_original):
 				tmp[i] = self.communities_original[k]
 			self.communities_original = tmp
-		print(len(self.communities_original))
 		self.degree = None
-
-	# def _spectral_clustering(self, G, n_clusters):
 
 	def _get_random_degree_node(self, nodes, n):
 		"""
@@ -190,22 +162,3 @@ class Community_initialization:
 				self.communities[idx] = np.delete(self.communities[idx], np.where(self.communities[idx] == comm_random_indiv))
 			result.append(indiv)
 		return result
-
-
-if __name__ == "__main__":
-	G = nx.generators.barabasi_albert_graph(100, 2, 0)
-	# S = max_centrality_individual(4, G, "second_order")
-	# print(S)
-	# C_i = Community_initialization(G, 2)
-	# inds = C_i.get_comm_members_random(4, 5, degree=True)
-	# print(inds)
-
-	# C_i = Community_initialization(G, 2, method="spectral_clustering", n_clusters=50)
-	# inds = C_i.get_comm_members_random(4, 5, degree=True)
-	# print(inds)
-	import random
-	prng = random.Random(0)
-	print(degree_random(5, G, 10, prng))
-	# print(C_i.sample_min_repetitions(4, 10))
-	# print(C_i.get_random_members(2, 3))
-	# print(C_i.get_comm_members_degree(probabilistic=True))
