@@ -215,8 +215,9 @@ def CELF(k, G, p, no_simulations, model, prng):
 
 	return A
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
+	import random
 	G = nx.cycle_graph(100, create_using=nx.Graph())
 	print(nx.classes.function.info(G))
 
@@ -226,11 +227,10 @@ if __name__ == "__main__":
 	model = 'IC'
 
 	# A = high_degree_nodes(k, G)
-	A = low_distance_nodes(k, G)
-
+	# A = low_distance_nodes(k, G)
 	# A = single_discount_high_degree_nodes(k, G)
 	# A = generalized_degree_discount(k, G, p)
-	# A = general_greedy(k, G, p, num_sims, model) # this prints rather than returns
-	# A = CELF(k, G, p, num_sims, model)
+	A = general_greedy(k, G, p, num_sims, model, random.Random(0))
+	# A = CELF(k, G, p, num_sims, model, random.Random(0))
 
 	print(A, monte_carlo.MonteCarlo_simulation(G, A, p, num_sims, model))
