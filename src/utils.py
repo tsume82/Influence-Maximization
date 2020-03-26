@@ -4,7 +4,7 @@ import os
 import numpy as np
 import random
 import argparse
-import SRW_RWF_ISRW as Graph_Sampling
+import graph_sampling.SRW_RWF_ISRW as Graph_Sampling
 import operator as op
 from functools import reduce
 import math
@@ -248,7 +248,7 @@ def get_rank_score(seed_set, dataset_name, model, k, spread_function="monte_carl
 		seed_set = seed_set_perms[i]
 		i += 1
 
-	# uncomment this if you want to display all the previous scores
+	# uncomment this if you want to display all the smaller scores
 	# for k,v in scores.items():
 	# 	if k == seed_set:
 	# 		break
@@ -377,12 +377,3 @@ def inverse_ncr(combinations, r):
 		n += 1
 		ncr_n = ncr(n, r)
 	return n
-
-# G = nx.generators.random_graphs.barabasi_albert_graph(5, 3, seed=0)
-# G_w = add_weights_WC(G)
-# print(dict(G_w.adjacency()))
-#
-# print(G_w[0][4]["weight"])
-
-# if __name__=="__main__":
-# 	get_best_score("tiny_wiki_community", "WC", 2)

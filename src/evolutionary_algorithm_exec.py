@@ -133,7 +133,7 @@ def read_arguments():
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
-	parser.add_argument('--smart_initialization', default="none", choices=["none", "degree", "eigenvector", "katz",
+	parser.add_argument('--smart_initialization', default="degree_random", choices=["none", "degree", "eigenvector", "katz",
 																		   "closeness", "betweenness",
 																		   "community", "community_degree",
 																		   "community_degree_spectral", "degree_random",
@@ -197,7 +197,7 @@ def read_arguments():
 
 	parser.add_argument("--moving_avg_len", type=int, default=10,
 						help="moving average length for multi-argmed bandit problem")
-	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=False)
+	parser.add_argument("--filter_best_spread_nodes", type=str2bool, nargs="?", const=True, default=True)
 	parser.add_argument("--search_space_size_min", type=int, default=1e9, help="lower bound on the number of combinations")
 	parser.add_argument("--search_space_size_max", type=int, default=1e11, help="upper bound on the number of combinations")
 	parser.add_argument("--dynamic_population", type=str2bool, nargs="?", const=True, default=True)

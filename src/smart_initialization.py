@@ -162,3 +162,5 @@ class Community_initialization:
 				self.communities[idx] = np.delete(self.communities[idx], np.where(self.communities[idx] == comm_random_indiv))
 			result.append(indiv)
 		return result
+
+

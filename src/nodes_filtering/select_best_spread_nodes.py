@@ -1,7 +1,9 @@
 import numpy as np
-import utils
 import random
 from scipy import stats
+import sys
+
+import utils
 
 
 def sample_mc(node, num_samples, sampling_func):
@@ -86,7 +88,7 @@ def _evaluate_spreads_with_allowed_error(nodes, allowed_error, alpha, sampling_f
 	nodes_errors = {}
 
 	for j, node in enumerate(nodes):
-		print("{}/{}".format(j, len(nodes)))
+		sys.stdout.write("Node {}/{} \r".format(j, len(nodes)))
 
 		if node not in nodes_samples.keys():
 			nodes_samples[node] = []
@@ -124,7 +126,9 @@ def filter_best_nodes(G, n, allowed_n_error, sampling_func):
 	allowed_err = 0.8
 	best = np.array(G.nodes)
 	nodes_samples = {}
+	iter = 1
 	while len(best) > n * (1 + allowed_n_error) and allowed_err > 0.1:
+		print("Nodes filtering iter: {}".format(iter))
 		nodes_samples, nodes_errors = _evaluate_spreads_with_allowed_error(best, allowed_err, 0.05,
 																		  sampling_func, nodes_samples)
 		best_samples = {}
@@ -133,6 +137,7 @@ def filter_best_nodes(G, n, allowed_n_error, sampling_func):
 		best = _best_nodes(best_samples, n, nodes_errors)
 		allowed_err -= 0.1
 		allowed_err = round(allowed_err, 4)
+		iter += 1
 
 	return list(best)
 
@@ -146,7 +151,5 @@ if __name__ == "__main__":
 	prng = random.Random(0)
 	n = int(0.01*len(G.nodes))
 	sampling_func = partial(mc, G=G, model="IC", p=0.01, max_hop=3, no_simulations=1, random_generator=prng)
-	#TODO: modificare allowed n error e al posto di questo settare n a un valore più piccolo e poi ritornarne n insomma
-	# o di più
 	best = filter_best_nodes(G, n, allowed_n_error=1, sampling_func=sampling_func)
 	print(f"Best candidates selected: {len(best)}")
