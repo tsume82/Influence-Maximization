@@ -1,3 +1,7 @@
+"""
+The values returned by the two hop spread function are compared to the manually calculated spread values
+"""
+
 import unittest
 import networkx as nx
 
