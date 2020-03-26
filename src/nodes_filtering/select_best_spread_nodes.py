@@ -144,12 +144,13 @@ def filter_best_nodes(G, n, allowed_n_error, sampling_func):
 
 if __name__ == "__main__":
 	from functools import partial
+	import networkx as nx
 	from spread.monte_carlo_max_hop import MonteCarlo_simulation as mc
-	import load
-
-	G = utils.load_graph(g_type="CA-GrQc")
+	G = nx.barabasi_albert_graph(n=1000, m=5, seed=0)
 	prng = random.Random(0)
 	n = int(0.01*len(G.nodes))
 	sampling_func = partial(mc, G=G, model="IC", p=0.01, max_hop=3, no_simulations=1, random_generator=prng)
 	best = filter_best_nodes(G, n, allowed_n_error=1, sampling_func=sampling_func)
-	print(f"Best candidates selected: {len(best)}")
+	print(f"Number of best spread nodes selected: {len(best)}")
+	print(f"Best spread nodes: {best}")
+
