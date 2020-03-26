@@ -136,4 +136,4 @@ if __name__ == "__main__":
 	for n in G.nodes():
 		init_dict[n] = {}
 	nx.set_node_attributes(G, init_dict, name="activated_by")
-	print(MonteCarlo_simulation(G, [0, 2, 4, 6, 8, 10], 0.7, 100, 'IC', 5, random.Random(0)))
+	print(MonteCarlo_simulation(G, [0, 2, 4, 6, 8, 10], 0.7, 100, 'IC', random.Random(0)))
