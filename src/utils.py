@@ -4,13 +4,11 @@ import os
 import numpy as np
 import random
 import argparse
-import graph_sampling.SRW_RWF_ISRW as Graph_Sampling
 import operator as op
 from functools import reduce
-import math
 
-
-from load import read_graph
+import src.graph_sampling.SRW_RWF_ISRW as Graph_Sampling
+from src.load import read_graph
 
 
 def args2cmd(args, exec_name, hpc=False):
