@@ -31,7 +31,7 @@ def max_centrality_individual(k, G, centrality_metric="degree"):
 	return list(sorted_nodes_centrality)[:k]
 
 
-def degree_random(k, Graph, n, prng, nodes = None, ranked_probability=False, truncated=100):
+def degree_random(k, Graph, n, prng, nodes=None):
 	"""
 	returns n individuals containing k nodes, chosen from graph with probabilities proportional to their degrees
 	"""
@@ -163,4 +163,38 @@ class Community_initialization:
 			result.append(indiv)
 		return result
 
+
+if __name__ == "__main__":
+	G = nx.cycle_graph(100, create_using=nx.Graph())
+	k = 5
+	# single smart individuals accoriding to centrality metrics
+	centrality_metrics = ["degree", "eigenvector", "katz", "closeness", "betweenness", "second_order"]
+	for centarlity_metric in centrality_metrics:
+		smart_ind = max_centrality_individual(k=k, G=G, centrality_metric=centarlity_metric)
+		print("Best seed set accoridng to {}: {}".format(centarlity_metric, smart_ind))
+
+	# multiple smart inidividuals
+	n = 5
+	import random
+	prng = random.Random(0)
+	smart_inds = degree_random(k=k, Graph=G, n=n, prng=prng)
+	print("\nBest individuals according to random degree strategy: {}".format(smart_inds))
+
+	# community detection smart inidividuals
+	comm_init = Community_initialization(G=G, random_seed=0, method="louvain")
+	smart_inds = comm_init.get_comm_members_random(n=n, k=k, degree=False)
+	print("\nBest individuals according to community random strategy, "
+		  "\nlouvain community detection algorithm: {}".format(smart_inds))
+	smart_inds = comm_init.get_comm_members_random(n=n, k=k, degree=True)
+	print("\nBest individuals according to community degre strategy, "
+		  "\nlouvain community detection algorithm: {}".format(smart_inds))
+
+	# spectral clustering, setting the size of seed sets as number of clusters
+	comm_init = Community_initialization(G=G, random_seed=0, method="spectral_clustering", n_clusters=k)
+	smart_inds = comm_init.get_comm_members_random(n=n, k=k, degree=False)
+	print("\nBest individuals according to community random strategy, "
+		  "\nspectral clustering community detection algorithm: {}".format(smart_inds))
+	smart_inds = comm_init.get_comm_members_random(n=n, k=k, degree=True)
+	print("\nBest individuals according to community degre strategy, "
+		  "\nspectral cluestring community detection algorithm: {}".format(smart_inds))
 
