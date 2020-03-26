@@ -317,7 +317,11 @@ def common_elements(lst1, lst2):
 
 def diversity(population):
 	"""
-	reutrns the diversity of a given population
+	returns the diversity of a given population, the diversity is computed as follows:
+		1. for each individual: compute the percentage of common nodes with each other individual, calculate the average of
+		these values
+		2. compute the average similarity by calculating the average overlapping percentage of all the nodes ( calculated in step 1)
+		3. compute the diversity as 1 - average similarity
 	:param population:
 	:return:
 	"""
@@ -341,7 +345,7 @@ def diversity(population):
 
 def individuals_diversity(population):
 	"""
-	percentage of different individuals in population
+	percentage of different individuals in a population
 	"""
 	pop = []
 	for individual in population:
