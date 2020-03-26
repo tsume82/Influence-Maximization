@@ -57,3 +57,29 @@ class Multi_armed_bandit:
 		self.sums_of_reward[idx] = np.sum(self.rewards[idx])
 		self.total_reward += reward
 		self.n_trials +=1
+
+
+if __name__ == "__main__":
+	# define some possible actions
+	def action1(a):
+		return a-1
+
+	def action2(a):
+		return a+1
+
+	# define reward function
+	def compute_reward(a, new_a):
+		return new_a - a
+
+	actions = [action1, action2]
+	mab = Multi_armed_bandit(actions=actions)
+	a = 10
+	n_iteractions = 10
+	for iter in range(n_iteractions):
+		action = mab.select_action()
+		new_a = action(a)
+		print("Number of times each action was selected: ")
+		for act, n in zip(actions, mab.n_selections):
+			print("{}: {}".format(act.__name__, n))
+		reward = compute_reward(a, new_a)
+		mab.update_reward(reward)
