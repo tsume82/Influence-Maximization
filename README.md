@@ -31,6 +31,15 @@ nodes filtering, smart initialization, execution of the ea algorithm with approp
  dynamic mutation selection)
  * smart_initialization: implementation of different smart initialization techniques
  * utils: mix of helpful functions
+ * experiments: script used for execution of multiple experiments
  * load.py: graph loading code
  * mo_evolutionaryalgorithm: multi-objective old evolutionary algorithm code
  
+
+To run the whole pipeline:
+
+``
+cd Influence-Maximization;
+python -m src.evolutionary_algorithm_exec
+``
+
