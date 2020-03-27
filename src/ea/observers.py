@@ -90,5 +90,7 @@ def ea_observer2(population, num_generations, num_evaluations, args):
 	sf.write("{},".format(generation_stats["improvement"]))
 	if args["mab"] is not None:
 		sf.write("{}\n".format(args["mab"].n_selections))
+	else:
+		sf.write("\n")
 
 	return
