@@ -124,10 +124,6 @@ def read_arguments():
 						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
-	# parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
-	# parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
-	# parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
-	# 															 'generation population')
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
@@ -243,20 +239,11 @@ def create_out_dir(args):
 
 	out_name = ".csv"
 
-	# if args["out_file"] is None:
 	population_file = out_dir + "/" + "population" + out_name
-	# else:
-	# 	population_file = args["out_file"]
 
-	# if args["log_file"] is None:
 	log_file = out_dir + "/" + "log" + out_name
-	# else:
-	# 	log_file = args["log_file"]
 
-	# if args["generations_file"] is None:
 	generations_file = out_dir + "/" + "generations" + out_name
-	# else:
-	# 	generations_file = args["generations_file"]
 
 	return population_file, generations_file, log_file
 
@@ -361,9 +348,7 @@ if __name__ == "__main__":
 
 	nodes = filter_nodes(G, args)
 	initial_population = create_initial_population(G, args, prng, nodes)
-	# node2vec_file = "../experiments/node2vec_embeddings_training_best/out/wiki/dimensions_32/seed_1_exp_in/repetition_0/embeddingsseed_1_embedding.emb.emb"
 	node2vec_model = initialize_node2vec_model(args["node2vec_file"])
-	# node2vec_model = initialize_node2vec_model(node2vec_file)
 
 	generations_file = initialize_stats(generations_file)
 	individuals_file = initialize_inidividuls_file(population_file)
