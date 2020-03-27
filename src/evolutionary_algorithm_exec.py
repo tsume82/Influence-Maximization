@@ -124,11 +124,10 @@ def read_arguments():
 						help='graph type')
 	parser.add_argument('--g_seed', type=int, default=0, help='random seed of the graph')
 	parser.add_argument('--g_file', default=None, help='location of graph file')
-	parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
-	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
-	parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
-																 'generation population')
-	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
+	# parser.add_argument('--out_file', default=None, help='location of the output file containing the final population')
+	# parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
+	# parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
+	# 															 'generation population')
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
 							 'to have default name')
@@ -242,32 +241,29 @@ def create_out_dir(args):
 		if not os.path.exists(out_dir):
 			os.makedirs(out_dir)
 
-	if args["out_name"] is None:
-		out_name = ".csv"
-	else:
-		out_name = args["out_name"]
+	out_name = ".csv"
 
-	if args["out_file"] is None:
-		population_file = out_dir + "/" + "population_" + out_name
-	else:
-		population_file = args["out_file"]
+	# if args["out_file"] is None:
+	population_file = out_dir + "/" + "population" + out_name
+	# else:
+	# 	population_file = args["out_file"]
 
-	if args["log_file"] is None:
-		log_file = out_dir + "/" + "log_" + out_name
-	else:
-		log_file = args["log_file"]
+	# if args["log_file"] is None:
+	log_file = out_dir + "/" + "log" + out_name
+	# else:
+	# 	log_file = args["log_file"]
 
-	if args["generations_file"] is None:
-		generations_file = out_dir + "/" + "generations_" + out_name
-	else:
-		generations_file = args["generations_file"]
+	# if args["generations_file"] is None:
+	generations_file = out_dir + "/" + "generations" + out_name
+	# else:
+	# 	generations_file = args["generations_file"]
 
 	return population_file, generations_file, log_file
 
 
 def initialize_fitness_function(G, args, prng):
 	"""
-	fitness function smart initialization
+	fitness function initialization
 	"""
 	if args["spread_function"] is None or args["spread_function"] == "monte_carlo":
 		spread_function = partial(monte_carlo, no_simulations=args["no_simulations"], p=args["p"], model=args["model"],

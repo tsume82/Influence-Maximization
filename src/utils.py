@@ -193,32 +193,33 @@ def load_graph(g_file=None, g_type=None, g_nodes=None, g_new_edges=None, g_seed=
 	if g_file is not None:
 		G = read_graph(g_file)
 	else:
+		datasets_dir = "experiments/datasets/"
 		if g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(g_nodes, g_new_edges, seed=g_seed)
 		elif g_type == "wiki":
-			G = read_graph("experiments/datasets/wiki-Vote.txt", directed=True)
+			G = read_graph(datasets_dir + "wiki-Vote.txt", directed=True)
 		elif g_type == "amazon":
-			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
+			G = read_graph(datasets_dir + "amazon0302.txt", directed=True)
 		elif g_type == "twitter":
-			G = read_graph("../experiments/datasets/twitter_combined.txt", directed=True)
+			G = read_graph(datasets_dir + "twitter_combined.txt", directed=True)
 		elif g_type == "facebook":
-			G = read_graph("../experiments/datasets/facebook_combined.txt", directed=False)
+			G = read_graph(datasets_dir + "facebook_combined.txt", directed=False)
 		elif g_type == "CA-GrQc":
-			G = read_graph("../experiments/datasets/CA-GrQc.txt", directed=True)
+			G = read_graph(datasets_dir + "CA-GrQc.txt", directed=True)
 		elif g_type == "epinions":
-			G = read_graph("../experiments/datasets/soc-Epinions1.txt", directed=True)
+			G = read_graph(datasets_dir + "soc-Epinions1.txt", directed=True)
 		elif g_type == "tiny_wiki":
-			G = read_graph("../experiments/datasets/Tiny_wiki_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_wiki_{}nodes_seed0.txt".format(g_nodes), directed=True)
 		elif g_type == "tiny_amazon":
-			G = read_graph("../experiments/datasets/Tiny_amazon_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_amazon_{}nodes_seed0.txt".format(g_nodes), directed=True)
 		elif g_type == "tiny_CA-GrQc":
-			G = read_graph("../experiments/datasets/Tiny_CA-GrQc_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_CA-GrQc_{}nodes_seed0.txt".format(g_nodes), directed=True)
 		elif g_type == "tiny_wiki_community":
-			G = read_graph("../experiments/datasets/Tiny_wiki_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_wiki_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
 		elif g_type == "tiny_amazon_community":
-			G = read_graph("../experiments/datasets/Tiny_amazon_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_amazon_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
 		elif g_type == "tiny_CA-GrQc_community":
-			G = read_graph("../experiments/datasets/Tiny_CA-GrQc_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
+			G = read_graph(datasets_dir + "Tiny_CA-GrQc_community_{}nodes_seed0.txt".format(g_nodes), directed=True)
 	return G
 
 

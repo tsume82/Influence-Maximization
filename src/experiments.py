@@ -82,16 +82,6 @@ if __name__ == "__main__":
 	if not os.path.exists(out_directory):
 		os.makedirs(out_directory)
 
-	# write the current commit revision
-	sha1 = current_commit_revision()
-	f = open(out_directory + "/commit_revisions", 'a+')
-	f.seek(0)
-	lines = f.readlines()
-	# check if the last commit revision is the one we are still using
-	if len(lines) == 0 or (sha1 not in lines[-1]):
-		f.write(sha1)
-	f.close()
-
 	tot_experiments = 0
 	for sub_dir, _, files in os.walk(in_directory):
 		for file in files:
@@ -113,3 +103,13 @@ if __name__ == "__main__":
 				print("Experiment config file: {}".format(sub_dir + "/" + file))
 				run_experiment(sub_dir + "/" + file, out_sub_dir + "/" + file.replace(".json", ""), hpc=args.hpc,
 							   explicit_params=args.explicit_parameters)
+
+	# write the current commit revision
+	sha1 = current_commit_revision()
+	f = open(out_directory + "/commit_revisions", 'a+')
+	f.seek(0)
+	lines = f.readlines()
+	# check if the last commit revision is the one we are still using
+	if len(lines) == 0 or (sha1 not in lines[-1]):
+		f.write(sha1)
+	f.close()
