@@ -8,28 +8,28 @@ import argparse
 import time
 import networkx as nx
 import json
-import utils
 
 from gensim.models import KeyedVectors
 
-from ea.evolutionary_algorithm import ea_influence_maximization
-import ea.mutators as mutators
+from src.ea.evolutionary_algorithm import ea_influence_maximization
+import src.ea.mutators as mutators
 
-from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
-from spread.monte_carlo_mark import MonteCarlo_simulation as monte_carlo_mark
-from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-from spread.monte_carlo_max_hop_mark import MonteCarlo_simulation as monte_carlo_max_hop_mark
-from spread.two_hop import two_hop_spread as two_hop
+from src.spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+from src.spread.monte_carlo_mark import MonteCarlo_simulation as monte_carlo_mark
+from src.spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from src.spread.monte_carlo_max_hop_mark import MonteCarlo_simulation as monte_carlo_max_hop_mark
+from src.spread.two_hop import two_hop_spread as two_hop
 
-# from spread_pyx.monte_carlo import MonteCarlo_simulation as monte_carlo
-# from spread_pyx.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-# from spread_pyx.two_hop import two_hop_spread as two_hop
+# from src.spread_pyx.monte_carlo import MonteCarlo_simulation as monte_carlo
+# from src.spread_pyx.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+# from src.spread_pyx.two_hop import two_hop_spread as two_hop
 
-from smart_initialization import max_centrality_individual, Community_initialization, degree_random
-from utils import load_graph, dict2csv, inverse_ncr
-from nodes_filtering.select_best_spread_nodes import filter_best_nodes as filter_best_spread_nodes
-from nodes_filtering.select_min_degree_nodes import filter_best_nodes as filter_min_degree_nodes
+from src.smart_initialization import max_centrality_individual, Community_initialization, degree_random
+from src.utils import load_graph, dict2csv, inverse_ncr
+from src.nodes_filtering.select_best_spread_nodes import filter_best_nodes as filter_best_spread_nodes
+from src.nodes_filtering.select_min_degree_nodes import filter_best_nodes as filter_min_degree_nodes
 
+import src.utils as utils
 
 def create_initial_population(G, args, prng=None, nodes=None):
 	"""
@@ -128,7 +128,6 @@ def read_arguments():
 	parser.add_argument('--log_file', default=None, help='location of the log file containing info about the run')
 	parser.add_argument('--generations_file', default=None, help='location of the log file containing stats from each '
 																 'generation population')
-	#TODO: guardare come rimuovere questo out_name e out_dir?
 	parser.add_argument('--out_name', default=None, help='string that will be inserted in the out file names')
 	parser.add_argument('--out_dir', default=None,
 						help='location of the output directory in case if outfile is preferred'
@@ -218,8 +217,11 @@ def read_arguments():
 		ea_args["out_dir"] = args["out_dir"]
 		# check whether all the parameters are specified in the config file
 		if set(args.keys()) != set(ea_args.keys()):
-			print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
-			raise KeyError("Missing arguments")
+			if len(set(args.keys()).difference(set(ea_args.keys())))>0:
+				print("Missing arguments: {}".format(set(args.keys()).difference(set(ea_args.keys()))))
+			else:
+				print("Unknown arguments: {}".format(set(ea_args.keys()).difference(set(args.keys()))))
+			raise KeyError("Arguments error")
 		args.update(ea_args)
 
 	# make args read only

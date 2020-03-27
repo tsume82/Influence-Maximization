@@ -9,7 +9,7 @@ import os
 import json
 import subprocess
 
-from utils import args2cmd, config_file2cmd, str2bool
+from src.utils import args2cmd, config_file2cmd, str2bool
 
 
 def current_commit_revision():

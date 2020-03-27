@@ -3,7 +3,7 @@ import random
 from scipy import stats
 import sys
 
-import utils
+import src.utils
 
 
 def sample_mc(node, num_samples, sampling_func):

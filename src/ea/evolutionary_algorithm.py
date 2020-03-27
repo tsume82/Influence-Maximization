@@ -1,14 +1,14 @@
 import inspyred
 import networkx as nx
 
-from ea.crossovers import ea_one_point_crossover
-from ea.observers import ea_observer0, ea_observer1, ea_observer2
-from ea.evaluators import one_process_evaluator, multiprocess_evaluator
-from ea.generators import generator, subpopulation_generator
-import ea.mutators as mutators
-# from ea.generators import subpopulation_generator as generator
-from ea.terminators import generation_termination
-from multi_armed_bandit import Multi_armed_bandit
+from src.ea.crossovers import ea_one_point_crossover
+from src.ea.observers import ea_observer0, ea_observer1, ea_observer2
+from src.ea.evaluators import one_process_evaluator, multiprocess_evaluator
+from src.ea.generators import generator, subpopulation_generator
+import src.ea.mutators as mutators
+# from src.ea.generators import subpopulation_generator as generator
+from src.ea.terminators import generation_termination
+from src.multi_armed_bandit import Multi_armed_bandit
 
 
 # @inspyred.ec.variators.crossover

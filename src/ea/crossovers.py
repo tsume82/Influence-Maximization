@@ -1,5 +1,5 @@
 import inspyred
-from ea.mutators import ea_global_random_mutation
+from src.ea.mutators import ea_global_random_mutation
 
 
 @inspyred.ec.variators.crossover

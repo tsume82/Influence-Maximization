@@ -11,10 +11,10 @@ from itertools import combinations
 import os
 import networkx as nx
 
-from spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
-from spread.monte_carlo import MonteCarlo_simulation as monte_carlo
-import SRW_RWF_ISRW as Graph_Sampling
-from utils import load_graph
+from src.spread.monte_carlo_max_hop import MonteCarlo_simulation as monte_carlo_max_hop
+from src.spread.monte_carlo import MonteCarlo_simulation as monte_carlo
+import src.graph_sampling.SRW_RWF_ISRW as Graph_Sampling
+from src.utils import load_graph
 
 
 def plot_degree_distribution(G, title, save=False, out_name=None):

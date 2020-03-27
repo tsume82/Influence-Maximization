@@ -1,6 +1,6 @@
 import networkx as nx
 import heapq as hq
-from spread import monte_carlo
+from src.spread import monte_carlo
 
 """ Heuristics for the Influence Maximization problem"""
 

@@ -1,6 +1,7 @@
 """
 Selection of nodes according to their degree
 """
+import networkx as nx
 
 def filter_best_nodes(G, min_degree, nodes=None):
 	"""

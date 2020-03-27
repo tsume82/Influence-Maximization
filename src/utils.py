@@ -19,9 +19,9 @@ def args2cmd(args, exec_name, hpc=False):
 	:return: string with command
 	"""
 	if hpc:
-		out = "python3 " + exec_name
+		out = "python3 -m src." + exec_name.replace(".py", "")
 	else:
-		out = "python " + exec_name
+		out = "python -m src." + exec_name.replace(".py", "")
 	for k, v in args.items():
 		out += " "
 		out += "--{}={}".format(k, v)
@@ -47,9 +47,9 @@ def config_file2cmd(config_file_name, out_dir, exec_name, hpc=False):
 	:return: string with command
 	"""
 	if hpc:
-		out = "python3 " + exec_name
+		out = "python3 -m src." + exec_name.replace(".py", "")
 	else:
-		out = "python " + exec_name
+		out = "python -m src." + exec_name.replace(".py", "")
 
 	out += " --config_file={} --out_dir={}".format(config_file_name, out_dir)
 	return out
@@ -196,7 +196,7 @@ def load_graph(g_file=None, g_type=None, g_nodes=None, g_new_edges=None, g_seed=
 		if g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(g_nodes, g_new_edges, seed=g_seed)
 		elif g_type == "wiki":
-			G = read_graph("../experiments/datasets/wiki-Vote.txt", directed=True)
+			G = read_graph("experiments/datasets/wiki-Vote.txt", directed=True)
 		elif g_type == "amazon":
 			G = read_graph("../experiments/datasets/amazon0302.txt", directed=True)
 		elif g_type == "twitter":

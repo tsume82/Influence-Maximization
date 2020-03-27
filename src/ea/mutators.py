@@ -88,7 +88,7 @@ def eval_fitness(seed_set, random, args):
 	return spread
 
 
-# @inspyred.ec.variators.mutator
+@inspyred.ec.variators.mutator
 def ea_global_random_mutation(prng, candidate, args):
 	"""
 	randomly mutates one gene of the individual with one random node of the graph
@@ -281,7 +281,7 @@ def ea_global_subpopulation_mutation(random, candidate, args):
 	return mutatedIndividual
 
 #TODO: vederee se potrebbe essere l'if in fondo
-@inspyred.ec.variators.mutator
+# @inspyred.ec.variators.mutator
 def ea_adaptive_mutators_alteration(random, candidate, args):
 	"""
 	this method calls with certain probability global and local mutations, those must be specified in args as

@@ -1,7 +1,7 @@
-from utils import diversity, individuals_diversity
 import os
 import inspyred.ec
-from ea.generators import generator_new_nodes
+from src.ea.generators import generator_new_nodes
+from src.utils import diversity, individuals_diversity
 
 
 def adjust_population_size(num_generations, population, args):
