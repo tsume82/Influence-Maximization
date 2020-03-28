@@ -13,7 +13,7 @@ Influence-Maximization repository is organized as follows:
 * src_OLD: old source code in case it comes at hand
 * tests: some tests needed to check whether some implemented functions behave properly
 * experiments: subrepository containing inputs and outputs of each experimental setup
-* datasets: contains script to run to download datasets
+* datasets: contains script that downloads datasets
 
 The src module contains the following submodules:
 
