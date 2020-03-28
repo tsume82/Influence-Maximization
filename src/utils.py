@@ -193,7 +193,7 @@ def load_graph(g_file=None, g_type=None, g_nodes=None, g_new_edges=None, g_seed=
 	if g_file is not None:
 		G = read_graph(g_file)
 	else:
-		datasets_dir = "experiments/datasets/"
+		datasets_dir = "datasets/"
 		if g_type == "barabasi_albert":
 			G = nx.generators.barabasi_albert_graph(g_nodes, g_new_edges, seed=g_seed)
 		elif g_type == "wiki":

@@ -12,7 +12,8 @@ Influence-Maximization repository is organized as follows:
 * src: source code containing code of the implemented features
 * src_OLD: old source code in case it comes at hand
 * tests: some tests needed to check whether some implemented functions behave properly
-* experiments: subrepository containing datasets, inputs and outputs of each experimental setup
+* experiments: subrepository containing inputs and outputs of each experimental setup
+* datasets: contains script to run to download datasets
 
 The src module contains the following submodules:
 
@@ -43,3 +44,13 @@ cd Influence-Maximization;
 python -m src.evolutionary_algorithm_exec
 ``
 
+Python and libraries versions currently used:
+
+* python 3.6.8
+* inspyred                  1.0.1 
+* networkx                  2.3 
+* numpy                     1.16.3 
+* cython                    0.29.13 
+* node2vec                  0.3.1 
+* gensim                    3.8.1 
+* pandas                    0.24.2 
