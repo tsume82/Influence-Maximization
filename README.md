@@ -2,7 +2,7 @@
 Code and data for experiments with evolutionary influence maximization
 
 This repository contains source code and some experimental scripts for experimental setups. 
-The inputs, outputs, plots, datasets and other experiment-specific files are contained in another subrepository: 
+The inputs, outputs, plots and other experiment-specific files are contained in another subrepository: 
 [experiments](https://github.com/katerynak/Influence-Maximization-experiments).
 
 Influence-Maximization repository is organized as follows: 
