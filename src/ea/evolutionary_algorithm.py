@@ -84,7 +84,8 @@ def ea_influence_maximization(k,
 
 	bounder = inspyred.ec.DiscreteBounder(nodes)
 
-	if mutation_operator == mutators.ea_global_subpopulation_mutation or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
+	if mutation_operator == mutators.ea_global_subpopulation_mutation \
+			or mutators.ea_global_subpopulation_mutation in mutators_to_alterate:
 		gen = subpopulation_generator
 		seeds = prng.sample(nodes, k)
 		voronoi_cells = nx.algorithms.voronoi_cells(G, seeds)
