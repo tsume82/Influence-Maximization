@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 evolutionary algorithm execution file: contains methods related to input parameters processing and smart initialization
 """
@@ -31,9 +32,10 @@ from src.nodes_filtering.select_min_degree_nodes import filter_best_nodes as fil
 
 import src.utils as utils
 
+
 def create_initial_population(G, args, prng=None, nodes=None):
 	"""
-	smart initialization techniques
+	Smart initialization techniques.
 	"""
 	# smart initialization
 	initial_population = None
