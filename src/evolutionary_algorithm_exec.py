@@ -10,6 +10,7 @@ import argparse
 import time
 import networkx as nx
 import json
+import os
 
 from gensim.models import KeyedVectors
 
@@ -96,8 +97,9 @@ def read_arguments():
 	.json config file, which should be given as a parameter to the script, it
 	should contain all the other script parameters.
 	"""
-    parser = argparse.ArgumentParser(description='Evolutionary algorithm '
-                                                 'computation.')
+    parser = argparse.ArgumentParser(
+        description='Evolutionary algorithm computation.'
+    )
     # Problem setup.
     parser.add_argument('--k', type=int, default=10, help='Seed set size.')
     parser.add_argument('--p', type=float, default=0.01,
@@ -264,7 +266,9 @@ def read_arguments():
             in_params = json.load(f)
         ea_args = in_params["script_args"]
         ea_args["config_file"] = args["config_file"]
-        ea_args["out_dir"] = args["out_dir"]
+        if ea_args["out_dir"] is None:
+            # Overwrite the parameter.
+            ea_args["out_dir"] = args["out_dir"]
         # check whether all the parameters are specified in the config file
         if set(args.keys()) != set(ea_args.keys()):
             if len(set(args.keys()).difference(set(ea_args.keys()))) > 0:
@@ -286,7 +290,6 @@ def create_out_dir(args):
         out_dir = "."
     else:
         out_dir = args["out_dir"]
-        import os
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
     out_name = ".csv"
@@ -373,20 +376,20 @@ if __name__ == "__main__":
     # load mutation function
     mutation_operator = None
     mutators_to_alterate = []
-    if args["mutation_operator"] == "adaptive_mutations":
-        mutation_operator = mutators.ea_adaptive_mutators_alteration
+    if args["mutators_to_alterate"] is not None:
         for m in args["mutators_to_alterate"]:
             mutators_to_alterate.append(getattr(mutators, m))
+    if args["mutation_operator"] == "adaptive_mutations":
+        mutation_operator = mutators.ea_adaptive_mutators_alteration
     else:
         mutation_operator = getattr(mutators, args["mutation_operator"])
 
     if mutation_operator == mutators.ea_local_activation_mutation \
             or mutation_operator == mutators.ea_global_activation_mutation \
-            or mutators.ea_local_activation_mutation.__name__ in args["mutators_to_alterate"] \
-            or mutators.ea_global_activation_mutation.__name__ in args["mutators_to_alterate"]:
+            or mutators.ea_local_activation_mutation.__name__ in mutators_to_alterate \
+            or mutators.ea_global_activation_mutation.__name__ in mutators_to_alterate:
         monte_carlo_max_hop = monte_carlo_max_hop_mark
         monte_carlo = monte_carlo_mark
-
         init_dict = dict()
         for n in G.nodes():
             init_dict[n] = {}
