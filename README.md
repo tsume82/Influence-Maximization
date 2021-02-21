@@ -48,6 +48,12 @@ You need to specify all the hyperparameters of the algorithm in a .json config
 file and pass it as a parameter of the script. The results are stored in a
 directory specified as a script argument (`--out_dir`).
 
+## Limitations
+
+Pay attention: when you change the `mutation_operator` parameter, currently you
+need to add a decorator `@inspyred.ec.variators.mutator` to the selected mutation
+function in `src/ea/mutators.py`.
+
 Python and libraries versions currently used:
 
 * python 3.6.8
