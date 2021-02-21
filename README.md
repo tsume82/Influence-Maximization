@@ -41,8 +41,12 @@ To run the whole pipeline:
 
 ``
 cd Influence-Maximization;
-python -m src.evolutionary_algorithm_exec
+python -m src.evolutionary_algorithm_exec --config_file src/example_experimental_setup.json
 ``
+
+You need to specify all the hyperparameters of the algorithm in a .json config
+file and pass it as a parameter of the script. The results are stored in a
+directory specified as a script argument (`--out_dir`).
 
 Python and libraries versions currently used:
 
