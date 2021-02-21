@@ -33,7 +33,8 @@ def max_centrality_individual(k, G, centrality_metric="degree"):
 
 def degree_random(k, Graph, n, prng, nodes=None):
 	"""
-	returns n individuals containing k nodes, chosen from graph with probabilities proportional to their degrees
+	Returns n individuals containing k nodes, chosen from graph with
+	probabilities proportional to their degrees.
 	"""
 	individuals = []
 	if nodes is None:
