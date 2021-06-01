@@ -1,2 +1,19 @@
 metadata_version: 1
 name: InfluenceMaximization
+description: An optimization framework, based on evolutionary algorithms and graph-aware techniques, to maximize influence propagation in social networks.
+authors:
+- name: Giovanni Iacca
+  affiliations:
+  - name: University of Trento
+- name: Kateryna Konotopska
+  affiliations:
+  - name: University of Trento
+- name: Doina Bucur
+  affiliations:
+  - name: University of Twente
+- name: Alberto Tonda
+  affiliations:
+  - name: INRAE
+corresponding_contributor:
+  name: Giovanni Iacca
+  email: giovanni.iacca@unitn.it
