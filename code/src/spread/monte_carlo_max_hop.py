@@ -2,6 +2,9 @@ import networkx as nx
 import random
 import numpy
 
+# in order to avoid redundancy, the models are now taken from the generalized version in monte_carlo.py
+from monte_carlo import WC_model, IC_model
+
 """ Spread models """
 
 """ Simulation of approximated spread for Independent Cascade (IC) and Weighted Cascade (WC). 
@@ -10,54 +13,54 @@ import numpy
 """
 
 
-def IC_model(G, a, p, max_hop, random_generator):  # a: the set of initial active nodes
-	# p: the system-wide probability of influence on an edge, in [0,1]
-	A = set(a)  # A: the set of active nodes, initially a
-	B = set(a)  # B: the set of nodes activated in the last completed iteration
-	converged = False
+#def IC_model(G, a, p, max_hop, random_generator):  # a: the set of initial active nodes
+#	# p: the system-wide probability of influence on an edge, in [0,1]
+#	A = set(a)  # A: the set of active nodes, initially a
+#	B = set(a)  # B: the set of nodes activated in the last completed iteration
+#	converged = False
+#
+#	while (not converged) and (max_hop > 0):
+#		nextB = set()
+#		for n in B:
+#			for m in set(G.neighbors(n)) - A:  # G.neighbors follows A-B and A->B (successor) edges
+#				prob = random_generator.random()  # in the range [0.0, 1.0)
+#				if prob <= p:
+#					nextB.add(m)
+#		B = set(nextB)
+#		if not B:
+#			converged = True
+#		A |= B
+#		max_hop -= 1
+#
+#	return len(A)
 
-	while (not converged) and (max_hop > 0):
-		nextB = set()
-		for n in B:
-			for m in set(G.neighbors(n)) - A:  # G.neighbors follows A-B and A->B (successor) edges
-				prob = random_generator.random()  # in the range [0.0, 1.0)
-				if prob <= p:
-					nextB.add(m)
-		B = set(nextB)
-		if not B:
-			converged = True
-		A |= B
-		max_hop -= 1
 
-	return len(A)
-
-
-def WC_model(G, a, max_hop, random_generator):  # a: the set of initial active nodes
-	# each edge from node u to v is assigned probability 1/in-degree(v) of activating v
-	A = set(a)  # A: the set of active nodes, initially a
-	B = set(a)  # B: the set of nodes activated in the last completed iteration
-	converged = False
-
-	if nx.is_directed(G):
-		my_degree_function = G.in_degree
-	else:
-		my_degree_function = G.degree
-
-	while (not converged) and (max_hop > 0):
-		nextB = set()
-		for n in B:
-			for m in set(G.neighbors(n)) - A:
-				prob = random_generator.random()  # in the range [0.0, 1.0)
-				p = 1.0 / my_degree_function(m)
-				if prob <= p:
-					nextB.add(m)
-		B = set(nextB)
-		if not B:
-			converged = True
-		A |= B
-		max_hop -= 1
-
-	return len(A)
+#def WC_model(G, a, max_hop, random_generator):  # a: the set of initial active nodes
+#	# each edge from node u to v is assigned probability 1/in-degree(v) of activating v
+#	A = set(a)  # A: the set of active nodes, initially a
+#	B = set(a)  # B: the set of nodes activated in the last completed iteration
+#	converged = False
+#
+#	if nx.is_directed(G):
+#		my_degree_function = G.in_degree
+#	else:
+#		my_degree_function = G.degree
+#
+#	while (not converged) and (max_hop > 0):
+#		nextB = set()
+#		for n in B:
+#			for m in set(G.neighbors(n)) - A:
+#				prob = random_generator.random()  # in the range [0.0, 1.0)
+#				p = 1.0 / my_degree_function(m)
+#				if prob <= p:
+#					nextB.add(m)
+#		B = set(nextB)
+#		if not B:
+#			converged = True
+#		A |= B
+#		max_hop -= 1
+#
+#	return len(A)
 
 
 def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_generator=None):
@@ -80,10 +83,10 @@ def MonteCarlo_simulation(G, A, p, no_simulations, model, max_hop, random_genera
 
 	if model == 'WC':
 		for i in range(no_simulations):
-			results.append(WC_model(G, A, max_hop, random_generator))
+			results.append(WC_model(G, A, random_generator, max_hop))
 	elif model == 'IC':
 		for i in range(no_simulations):
-			results.append(IC_model(G, A, p, max_hop, random_generator))
+			results.append(IC_model(G, A, p, random_generator, max_hop))
 
 	return (numpy.mean(results), numpy.std(results))
 
