@@ -107,11 +107,15 @@ function in `src/ea/mutators.py`.
 
 Python and libraries versions currently used:
 
-* python 3.6.8
-* inspyred                  1.0.1 
-* networkx                  2.3 
-* numpy                     1.16.3 
-* cython                    0.29.13 
-* node2vec                  0.3.1 
-* gensim                    3.8.1 
-* pandas                    0.24.2 
+* python                    3.x
+* community                 1.0.0b1
+* cython                    0.29.13
+* gensim                    4.0.1
+* inspyred                  1.0.1
+* matplotlib                3.4.2
+* networkx                  2.5.1
+* node2vec                  0.4.3
+* numpy                     1.20.3
+* pandas                    1.2.4
+* python-levenshtein        0.12.2
+* sklearn                   0.0

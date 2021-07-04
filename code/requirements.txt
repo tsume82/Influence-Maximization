@@ -1,0 +1,11 @@
+community==1.0.0b1
+cython==0.29.13
+gensim==4.0.1
+inspyred==1.0.1
+matplotlib==3.4.2
+networkx==2.5.1
+node2vec==0.4.3
+numpy==1.20.3
+pandas==1.2.4
+python-levenshtein==0.12.2
+sklearn==0.0
