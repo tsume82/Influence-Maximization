@@ -3,7 +3,7 @@ import random
 import numpy
 
 # in order to avoid redundancy, the models are now taken from the generalized version in monte_carlo.py
-from monte_carlo import WC_model, IC_model
+from src.spread.monte_carlo import WC_model, IC_model
 
 """ Spread models """
 
