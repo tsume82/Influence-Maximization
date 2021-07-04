@@ -1,3 +1,8 @@
+""" Methods to log the internal state of the optimisation, at each generation.
+
+	The statistics measured and logged are: the population size, its diversity, and the improvement in fitness.
+"""
+
 import os
 import inspyred.ec
 from src.ea.generators import generator_new_nodes

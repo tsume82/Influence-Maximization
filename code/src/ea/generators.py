@@ -1,4 +1,4 @@
-
+""" Methods to generate new candidate solutions."""
 
 def generator(random, args):
 	"""

@@ -1,3 +1,5 @@
+""" Method to crossover two candidate solutions to produce two new ones. """
+
 import inspyred
 from src.ea.mutators import ea_global_random_mutation
 

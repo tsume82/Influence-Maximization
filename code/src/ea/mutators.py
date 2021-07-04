@@ -1,3 +1,8 @@
+""" Methods for generating randomly mutated individuals.
+
+	Both completely random mutations (ea_global_random_mutation) and variants of graph-aware mutations (ea_local_neighbors_random_mutation, ea_global_low_deg_mutation, etc.).
+"""	 
+
 import inspyred
 import numpy as np
 

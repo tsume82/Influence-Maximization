@@ -1,3 +1,5 @@
+""" Method to form a new population of solutions, given the old population. """
+
 import inspyred
 
 # @inspyred.ec.replacers.plus_replacement
@@ -35,7 +37,7 @@ def ea_replacer(random, population, parents, offspring, args):
 		if n_i > n:
 			# remove all the "extra" occurrences from parents,
 			# attention here: sometimes individuals with same candidates have different monte carlo fitness evaluations,
-			# removing some of them may introduce loss of the individual with the highiest fitness
+			# removing some of them may introduce loss of the individual with the highest fitness
 			for _ in range(n_i - n):
 				# remove one individual having as candidate 'individual' candidate
 				pool.remove(same_individuals.pop())

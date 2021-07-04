@@ -1,3 +1,5 @@
+""" Methods for evaluating the fitness of a candidate solution. """
+
 from multiprocessing import Pool
 import random
 
