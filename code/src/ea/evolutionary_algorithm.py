@@ -1,3 +1,5 @@
+""" The driver and configuration of the evolutionary algorithm. """
+
 import inspyred
 import networkx as nx
 

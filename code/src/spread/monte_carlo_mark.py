@@ -6,7 +6,6 @@ import numpy
 
 """ Simulation of approximated spread for Independent Cascade (IC) and Weighted Cascade (WC). Nodes activators (distant
 	up to two hops) are saved as nodes' attributes.  
-	saved 
 	Suits (un)directed graphs. 
 	Assumes the edges point OUT of the influencer, e.g., if A->B or A-B, then "A influences B".
 """

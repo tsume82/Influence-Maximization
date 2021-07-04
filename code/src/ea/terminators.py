@@ -1,3 +1,7 @@
+""" Method which determines when the optimisation run should terminate.
+
+	generation_termination ends the run when a configurable number of generations were reached.
+"""
 
 def generation_termination(population, num_generations, num_evaluations, args):
 	"""
